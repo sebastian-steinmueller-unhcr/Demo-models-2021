@@ -82,12 +82,10 @@ t.dem.check1859.male <- dem.check1859 %>%
 #               female_18_59, female_18_59Check, female_18_59Diff, female_18_59Flag, female, 
 #               male_18_59, male_18_59Check, male_18_59Diff, male_18_59Flag, male,
 #               totalEndYear))
-# write.xlsx(dem.check1859.discrepancy, "descriptive outputs/dem.check1859.discrepancy.xlsx")
+# write.xlsx(dem.check1859.discrepancy, "descriptive outputs/dem.check1859.discrepancy.xlsx") # this line only for sending discrepancy overview to ASR team
 
 ### check results: small and few discrepancies, orders of magnitude are all correct. 
 ### Re-populate the 18-59 bracket with the individual ones for "detailed" rows to be on the safe side and have data for the few with NA in 18-59 groups
-
-
 
 dem <- dem %>% 
   filter(!is.na(totalEndYear)) %>%  # check with DAS unit why so many NA values here
@@ -141,51 +139,6 @@ t.dem2020.cov <- dem %>%
 
 t.dem2020.reg.cov <- t.dem2020.reg.cov %>% 
   full_join(t.dem2020.cov)
-
-# check stateless
-t.demsta2020.reg.cov <- dem %>% 
-  mutate(populationTypeName = factor(populationTypeName ),
-         typeOfDisaggregation = factor(typeOfDisaggregation )) %>%
-  filter(year == 2020 & (populationType == "STA" | (populationType != "STA" & statelessStatus %in% c("UDN", "STL")))) %>% 
-  group_by(asylum_main_office_short, typeOfDisaggregation) %>% 
-  summarise(totalEndYear = sum(totalEndYear, na.rm = T)) %>%
-  mutate(freq.totalEndYear = round(totalEndYear/sum(totalEndYear)*100)) %>% 
-  pivot_wider(names_from = typeOfDisaggregation, values_from = freq.totalEndYear, id_cols = asylum_main_office_short) 
-
-t.demsta2020.cov <- dem %>% 
-  mutate(populationTypeName = factor(populationTypeName ),
-         typeOfDisaggregation = factor(typeOfDisaggregation )) %>%
-  filter(year == 2020 & (populationType == "STA" | (populationType != "STA" & statelessStatus %in% c("UDN", "STL")))) %>% 
-  group_by(typeOfDisaggregation) %>% 
-  summarise(totalEndYear = sum(totalEndYear, na.rm = T)) %>%
-  mutate(freq.totalEndYear = round(totalEndYear/sum(totalEndYear)*100)) %>% 
-  pivot_wider(names_from = typeOfDisaggregation, values_from = freq.totalEndYear) 
-
-
-t.demsta2020.reg.sexcov <- dem %>% 
-  mutate(typeOfDisaggregation2 = case_when(typeOfDisaggregation %in% c("Sex/Age", "Sex") ~ "Sex",
-         typeOfDisaggregation == "None" ~ "None" )) %>%
-  mutate(populationTypeName = factor(populationTypeName ),
-         typeOfDisaggregation2 = factor(typeOfDisaggregation2 )) %>%
-  filter(year == 2020 & (populationType == "STA" | (populationType != "STA" & statelessStatus %in% c("UDN", "STL")))) %>% 
-  group_by(asylum_main_office_short, typeOfDisaggregation2) %>% 
-  summarise(totalEndYear = sum(totalEndYear, na.rm = T)) %>%
-  mutate(freq.totalEndYear = round(totalEndYear/sum(totalEndYear)*100)) %>% 
-  pivot_wider(names_from = typeOfDisaggregation2, values_from = freq.totalEndYear, id_cols = asylum_main_office_short) 
-
-t.demsta2020.sexcov <- dem %>% 
-  mutate(typeOfDisaggregation2 = case_when(typeOfDisaggregation %in% c("Sex/Age", "Sex") ~ "Sex",
-                                           typeOfDisaggregation == "None" ~ "None" )) %>%
-  mutate(populationTypeName = factor(populationTypeName ),
-         typeOfDisaggregation2 = factor(typeOfDisaggregation2 )) %>%
-  filter(year == 2020 & (populationType == "STA" | (populationType != "STA" & statelessStatus %in% c("UDN", "STL")))) %>% 
-  group_by(typeOfDisaggregation2) %>% 
-  summarise(totalEndYear = sum(totalEndYear, na.rm = T)) %>%
-  mutate(freq.totalEndYear = round(totalEndYear/sum(totalEndYear)*100)) %>% 
-  pivot_wider(names_from = typeOfDisaggregation2, values_from = freq.totalEndYear) 
-
-
-
 
 
 # data set for models:
