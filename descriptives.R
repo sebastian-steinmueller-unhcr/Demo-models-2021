@@ -3,7 +3,7 @@
 ############################################ descriptives.R ################################################
 
 #### Queries: UNHCR Statistics and Demographics Section, Sebastian, steinmul@unhcr.org
-#### Project: Demographic models for GT 2020
+#### Project: Demographic models 2021 (after GT)
 #### Description: Data preparation plus descriptive analysis and visualisation of ASR 2020 REF + VDA demographic data 
 
 
@@ -27,11 +27,11 @@ library(electoral)
 options(scipen = 999)
 
 ### Other R files
-source("../../../General data and resources/unhcr_style.R")
-source("../../../General data and resources/functions.R")
+source("../../General data and resources/unhcr_style.R")
+source("../../General data and resources/functions.R")
 
 ### data
-load("../../../PSR/ASR 2020/data/asr_2019-2020_20210525.RData")
+load("../../PSR/ASR 2020/data/asr_2019-2020_20210525.RData")
 rm(hst, idp, oth, ret, roc, rsd, sta, uasc) # remove data sets not needed
 
 
