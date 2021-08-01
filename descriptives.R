@@ -87,9 +87,16 @@ t.dem.check1859.male <- dem.check1859 %>%
 ### check results: small and few discrepancies, orders of magnitude are all correct. 
 ### Re-populate the 18-59 bracket with the individual ones for "detailed" rows to be on the safe side and have data for the few with NA in 18-59 groups
 
+## check: why so many NAs in totalEndYear?
+# View(dem %>% filter(year == 2020, is.na(totalEndYear))) # appear to be entries in demo table where population group table had end-year value of 0 (check with DAS unit)
+
+## check: NAs in typeOfAggregation
+# View(dem %>% filter(year == 2020, is.na(typeOfAggregation))) # none in 2020 data
+
+
 dem <- dem %>% 
   filter(!is.na(totalEndYear)) %>%  # check with DAS unit why so many NA values here
-  mutate(typeOfAggregation = if_else(is.na(typeOfAggregation), "Total", typeOfAggregation)) %>% # check with DAS unit
+#  mutate(typeOfAggregation = if_else(is.na(typeOfAggregation), "Total", typeOfAggregation)) %>%
   mutate(typeOfDisaggregation = case_when(
     typeOfAggregation == "Detailed" | typeOfAggregation == "M/F and 18-59" ~ "Sex/Age",
     typeOfAggregation == "M/F" ~ "Sex",
@@ -113,6 +120,8 @@ dem <- dem %>%
       populationType != "REF" ~ as.character(populationTypeName)
     )
   )
+
+
 
 
 # check coverage by population type
@@ -143,13 +152,13 @@ t.dem2020.reg.cov <- t.dem2020.reg.cov %>%
 
 # data set for models:
 demref2020 <- dem %>% 
-  filter(populationType %in% c("REF", "ROC", "VDA"), year == 2020) %>% 
-  select(-female_18_24, -female_25_49, -female_50_59, -male_18_24, -male_25_49, -male_50_59)
+  filter(populationType %in% c("REF", "ROC", "VDA"), year == 2020) # %>% 
+ # select(-female_18_24, -female_25_49, -female_50_59, -male_18_24, -male_25_49, -male_50_59)
 
 
 demasy2020 <- dem %>% 
-  filter(populationType %in% c("ASY"), year == 2020) %>% 
-  select(-female_18_24, -female_25_49, -female_50_59, -male_18_24, -male_25_49, -male_50_59)
+  filter(populationType %in% c("ASY"), year == 2020) # %>% 
+  # select(-female_18_24, -female_25_49, -female_50_59, -male_18_24, -male_25_49, -male_50_59)
 
 
 # clean demref2020 data for some asylum countries with disaggregated data but unknown ages:
