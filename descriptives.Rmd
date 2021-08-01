@@ -1,0 +1,77 @@
+---
+title: Modelling the sex-age distribution of the global refugee and asylum-seeker
+  population
+author: "Sebastian Steinmueller (UNHCR)"
+date: 'Version: `r Sys.Date()`'
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+  word_document: default
+---
+
+# Introduction
+
+
+
+
+# Data set
+- Describe UNHCR official population statistics content and compilation
+- 
+
+## Descriptives of age distribution and missingness
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE
+)
+## run code to create descriptive figures and tables
+
+source("descriptives.R")
+
+```
+
+
+
+
+Globally
+- % per age/sex cat. 
+- % age missing
+- % age and sex missing
+
+```{r, echo=F}
+
+knitr::kable(t.checkunknowns.ref, caption = 'Unknown age in disaggregated data')
+
+```
+
+In some reporting countries, the age for a small proportion of refugees for whom age-disaggregated data was generally available could not be determined. This was the case for `r round(t.checkunknowns.ref$freq.ageUnknown*100,1)` per cent of the `r as.numeric(t.typeOfDisaggregation[t.typeOfDisaggregation$typeOfDisaggregation=="Sex/Age"&!(is.na(t.typeOfDisaggregation$typeOfDisaggregation)),])` refugees with available age disaggregation.
+
+By CoO
+- % per age/sex cat. 
+- % age missing
+- % age and sex missing
+
+```{r, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap='Demographic disaggregation coverage by origin country and asylum region'}
+p.typeOfDisaggregation.ori.asyreg
+
+```
+
+
+
+```{r, fig.height = 7, fig.width = 15, echo=F, fig.cap='2020 end-year refugee/Venezuelan population by origin country and asylum region'}
+p.totalEndYear.ori.asyreg
+
+```
+
+By CoA
+- % per age/sex cat. 
+- % age missing
+- % age and sex missing
+
+
+Discuss types and reasons for missingness (NMAR) and outline modelling approach to overcome.
+Why is using available data so bad?
