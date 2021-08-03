@@ -239,18 +239,21 @@ View(demref2020  %>% filter(typeOfDisaggregationBroad == "Sex/Age" & (femaleAgeU
      female_0_4:femaleAgeUnknown,female, totalEndYear, typeOfDisaggregation) %>% arrange(asylum, desc(femaleAgeUnknown)))
 
 dhondt_female <- demref2020  %>% 
-  filter(typeOfDisaggregationBroad == "Sex/Age" & (femaleAgeUnknown>0)) %>% 
-  select(index, female_0_4:femaleAgeUnknown, typeOfDisaggregation)
+  filter(typeOfDisaggregationBroad == "Sex/Age" & (femaleAgeUnknown>0)) # %>% 
+ #  select(index, female_0_4:femaleAgeUnknown, typeOfDisaggregation)
 
+addDhondt_female <- dhondt_female[FALSE,]
 
 for(i in 1:nrow(dhondt_female)){
   index.i <- dhondt_female[i,"index"]
   if(dhondt_female[i,"typeOfDisaggregation"] == "Detailed")
           x <- select(dhondt_female[i,], female_0_4:female_50_59, female_60, femaleAgeUnknown) else
           x <- select(dhondt_female[i,], female_0_4:female_12_17, female_18_59, female_60, femaleAgeUnknown)
-  x.dhondt <- seats_ha(parties = names(x)[1:(length(x)-1)], votes = as.numeric(x[1:(length(x)-1)]), n_seats = as.numeric(x[length(x)]), method = "dhondt")
-  
-  
+  x.dhondt <-seats_ha(parties = names(x)[1:(length(x)-1)], 
+                                votes = as.numeric(x[1:(length(x)-1)]), 
+                                n_seats = as.numeric(x[length(x)]), method = "dhondt")
+  x.addDhondt <- unlist(c(index.i, x.dhondt))
+  addDhondt_female <- addDhondt_female %>% full_join(bind_rows(x.addDhondt))
 }
 
 
