@@ -37,6 +37,18 @@ rm(hst, idp, oth, ret, roc, rsd, sta, uasc) # remove data sets not needed
 
 ##### II. Checks, new variables and data cleaning for modelling ##### 
 
+
+## consistent variable naming, new disaggregation variable
+dem <-  dem %>%
+  rename(typeOfDisaggregation = typeOfAggregation) %>% 
+  mutate(typeOfDisaggregationBroad = case_when(
+    typeOfDisaggregation == "Detailed" | typeOfDisaggregation == "M/F and 18-59" ~ "Sex/Age",
+    typeOfDisaggregation == "M/F" ~ "Sex",
+    typeOfDisaggregation == "Total" ~ "None"
+    )
+  )
+
+
 ## check: is there 18-59 age bracket data for "detailed" aggregation type, and does it match the finer age brackets for this group?
 
 dem.check1859 <- dem %>% 
@@ -97,7 +109,6 @@ t.dem.check1859.male <- dem.check1859 %>%
 dem <- dem %>% 
   filter(!is.na(totalEndYear)) %>%  # check with DAS unit why so many NA values here
 #  mutate(typeOfDisaggregation = if_else(is.na(typeOfDisaggregation), "Total", typeOfDisaggregation)) %>%
-  rename(typeOfDisaggregation = typeOfAggregation) %>% 
   mutate(typeOfDisaggregationBroad = case_when(
     typeOfDisaggregation == "Detailed" | typeOfDisaggregation == "M/F and 18-59" ~ "Sex/Age",
     typeOfDisaggregation == "M/F" ~ "Sex",
@@ -156,17 +167,31 @@ demref2020 <- dem %>%
   filter(populationType %in% c("REF", "ROC", "VDA"), year == 2020) # %>% 
  # select(-female_18_24, -female_25_49, -female_50_59, -male_18_24, -male_25_49, -male_50_59)
 
-
 demasy2020 <- dem %>% 
   filter(populationType %in% c("ASY"), year == 2020) # %>% 
   # select(-female_18_24, -female_25_49, -female_50_59, -male_18_24, -male_25_49, -male_50_59)
 
 
+
+
+
+### following refugees only for now
+
+##### number of refugees and countries of asylum by disaggregation type
+
+t.typeOfDisaggregation <- demref2020 %>% 
+  group_by(typeOfDisaggregation) %>% 
+  summarise(totalEndYear = sum(totalEndYear, na.rm = T),
+            nAsylum = n_distinct(asylum)) %>% 
+  mutate(freq.totalEndYear = totalEndYear/sum(totalEndYear),
+         freq.asylum = nAsylum / sum(nAsylum))
+
 # clean demref2020 data for some asylum countries with disaggregated data but unknown ages:
 
 #   View(demref2020  %>% filter(typeOfDisaggregationBroad == "Sex/Age" & (femaleAgeUnknown>0 | maleAgeUnknown > 0)) %>% select(asylum, asylum_country, origin, origin_country, 
-#          femaleAgeUnknown,female, maleAgeUnknown , male, totalEndYear) %>% arrange(asylum, desc(femaleAgeUnknown)))
+#          femaleAgeUnknown,female, maleAgeUnknown , male, totalEndYear, typeOfDisaggregation) %>% arrange(asylum, desc(femaleAgeUnknown)))
 
+table((demref2020$typeOfDisaggregationBroad))
 
 t.checkunknowns.ref <- demref2020 %>% 
   filter(typeOfDisaggregationBroad == "Sex/Age") %>% 
@@ -176,32 +201,33 @@ t.checkunknowns.ref <- demref2020 %>%
   mutate(ageUnknown = rowSums(select(., femaleAgeUnknown, maleAgeUnknown)),
          freq.ageUnknown = ageUnknown/totalEndYear)
 
-t.checkunknowns.asy <- demasy2020 %>% 
-  filter(typeOfDisaggregationBroad == "Sex/Age") %>% 
-  summarise(totalEndYear = sum(totalEndYear, na.rm = T),
-            femaleAgeUnknown = sum(femaleAgeUnknown, na.rm = T),
-            maleAgeUnknown = sum(maleAgeUnknown, na.rm = T)) %>% 
-  mutate(ageUnknown = rowSums(select(., femaleAgeUnknown, maleAgeUnknown)),
-         freq.ageUnknown = ageUnknown/totalEndYear)
-
-
-table((demref2020$typeOfDisaggregationBroad))
+# (almost) all are unknown for the following asylum country entries, thus assuming age distribution not available. Canada: statistical disclosure control makes age data unusable
 demref2020 <- demref2020 %>% 
   mutate(typeOfDisaggregationBroad = case_when(
-    asylum %in% c("CAN", "UKR", "PHI", "NIC") & typeOfDisaggregationBroad == "Sex/Age" &  (femaleAgeUnknown>0 | maleAgeUnknown > 0) ~ "Sex", # (almost) all are unknown for these rows, thus assuming age distribution not available. Canada: SDC makes age data unusable 
+    asylum %in% c("CAN", "UKR", "PHI", "NIC") & typeOfDisaggregationBroad == "Sex/Age" &  (femaleAgeUnknown>0 | maleAgeUnknown > 0) ~ "Sex",  
     !(asylum %in% c("CAN", "UKR", "PHI", "NIC") & typeOfDisaggregationBroad == "Sex/Age" &  (femaleAgeUnknown>0 | maleAgeUnknown > 0) ) ~ typeOfDisaggregationBroad
-  ))
-table((demref2020$typeOfDisaggregationBroad))
-table((demasy2020$typeOfDisaggregationBroad))
+  ),
+  typeOfDisaggregation = case_when(
+    asylum %in% c("CAN", "UKR", "PHI", "NIC") & typeOfDisaggregation %in% c("Detailed", "M/F and 18-59") &  (femaleAgeUnknown>0 | maleAgeUnknown > 0) ~ "M/F",  
+    !(asylum %in% c("CAN", "UKR", "PHI", "NIC") & typeOfDisaggregation %in% c("Detailed", "M/F and 18-59") &  (femaleAgeUnknown>0 | maleAgeUnknown > 0) ) ~ typeOfDisaggregation
+    )
+  )
+
+table(demref2020$typeOfDisaggregationBroad)
+table(demref2020$typeOfDisaggregation, demref2020$typeOfDisaggregationBroad)
 
 
-#### FIX LATER redistribute unknowns for Armenia and Germany ####### 
+#### redistribute unknowns for Armenia and Germany with d'hondt method
 # test d'hondt to allocate age unknown to sex totals:
+
+
+
+
 test <- as.numeric((demref2020  %>% filter(typeOfDisaggregationBroad == "Sex/Age" & (femaleAgeUnknown>0 | maleAgeUnknown > 0)) %>% 
                       arrange(asylum, desc(femaleAgeUnknown)))[1,] %>% select(female_0_4:femaleAgeUnknown))
 testnames <- names((demref2020  %>% filter(typeOfDisaggregationBroad == "Sex/Age" & (femaleAgeUnknown>0 | maleAgeUnknown > 0)) %>% 
                 arrange(asylum, desc(femaleAgeUnknown)))[1,] %>% select(female_0_4:femaleAgeUnknown))
-seats_ha(parties = testnames[c(1:5)], votes = test[c(1:5)], n_seats = test[6], method = "dhondt")
+seats_ha(parties = testnames[c(1:3, 7:8)], votes = test[c(1:3, 7:8)], n_seats = test[9], method = "dhondt")
 
 
 
