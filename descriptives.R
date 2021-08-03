@@ -239,10 +239,10 @@ View(demref2020  %>% filter(typeOfDisaggregationBroad == "Sex/Age" & (femaleAgeU
      female_0_4:femaleAgeUnknown,female, totalEndYear, typeOfDisaggregation) %>% arrange(asylum, desc(femaleAgeUnknown)))
 
 dhondt_female <- demref2020  %>% 
-  filter(typeOfDisaggregationBroad == "Sex/Age" & (femaleAgeUnknown>0)) # %>% 
- #  select(index, female_0_4:femaleAgeUnknown, typeOfDisaggregation)
+  filter(typeOfDisaggregationBroad == "Sex/Age" & (femaleAgeUnknown>0))  %>% 
+  select(index, female_0_4:femaleAgeUnknown, typeOfDisaggregation)
 
-addDhondt_female <- dhondt_female[FALSE,]
+addDhondt_female <- dhondt_female[FALSE,] %>% select(-femaleAgeUnknown, - typeOfDisaggregation)
 
 for(i in 1:nrow(dhondt_female)){
   index.i <- dhondt_female[i,"index"]
@@ -256,6 +256,51 @@ for(i in 1:nrow(dhondt_female)){
   addDhondt_female <- addDhondt_female %>% full_join(bind_rows(x.addDhondt))
 }
 
+sumDhondt_female <- dhondt_female %>% 
+  select(-femaleAgeUnknown, - typeOfDisaggregation) %>% 
+  bind_rows(addDhondt_female) %>% 
+  group_by(index) %>% 
+  summarise_all(sum, na.rm = T) %>%
+  ungroup() %>%
+  mutate(
+  femaleAgeUnknown = 0
+  )
+
+
+
+dhondt_male <- demref2020  %>% 
+  filter(typeOfDisaggregationBroad == "Sex/Age" & (maleAgeUnknown>0))  %>% 
+  select(index, male_0_4:maleAgeUnknown, typeOfDisaggregation)
+
+addDhondt_male <- dhondt_male[FALSE,] %>% select(-maleAgeUnknown, - typeOfDisaggregation)
+
+for(i in 1:nrow(dhondt_male)){
+  index.i <- dhondt_male[i,"index"]
+  if(dhondt_male[i,"typeOfDisaggregation"] == "Detailed")
+    x <- select(dhondt_male[i,], male_0_4:male_50_59, male_60, maleAgeUnknown) else
+      x <- select(dhondt_male[i,], male_0_4:male_12_17, male_18_59, male_60, maleAgeUnknown)
+    x.dhondt <-seats_ha(parties = names(x)[1:(length(x)-1)], 
+                        votes = as.numeric(x[1:(length(x)-1)]), 
+                        n_seats = as.numeric(x[length(x)]), method = "dhondt")
+    x.addDhondt <- unlist(c(index.i, x.dhondt))
+    addDhondt_male <- addDhondt_male %>% full_join(bind_rows(x.addDhondt))
+}
+
+sumDhondt_male <- dhondt_male %>% 
+  select(-maleAgeUnknown, - typeOfDisaggregation) %>% 
+  bind_rows(addDhondt_male) %>% 
+  group_by(index) %>% 
+  summarise_all(sum, na.rm = T) %>%
+  ungroup() %>%
+  mutate(
+    maleAgeUnknown = 0
+  )
+
+dim(sumDhondt_female)
+dim(sumDhondt_male)
+sumDhondt <- sumDhondt_female %>% full_join(sumDhondt_male, by = "index")
+dim(sumDhondt)
+sum(duplicated(sumDhondt$index)) # ok
 
 # data set for population pyramids
 
