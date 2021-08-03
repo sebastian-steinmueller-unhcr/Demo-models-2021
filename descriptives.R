@@ -297,16 +297,44 @@ sumDhondt_male <- dhondt_male %>%
 
 
 
+# replace values in demref2020 with adjusted counts from sumDhondt female and male
+
+dim(demref2020)
+
+demref2020 <- demref2020 %>% 
+  full_join(sumDhondt_female , by = "index") %>% 
+  mutate(
+    female_0_4 = ifelse(index %in% c(sumDhondt_female$index), female_0_4.y, female_0_4.x),
+    female_5_11 = ifelse(index %in% c(sumDhondt_female$index), female_5_11.y, female_5_11.x),
+    female_12_17 = ifelse(index %in% c(sumDhondt_female$index), female_12_17.y, female_12_17.x),
+    female_18_24 = ifelse(index %in% c(sumDhondt_female$index), female_18_24.y, female_18_24.x),
+    female_25_49 = ifelse(index %in% c(sumDhondt_female$index), female_25_49.y, female_25_49.x),
+    female_50_59 = ifelse(index %in% c(sumDhondt_female$index), female_50_59.y, female_50_59.x),
+    female_18_59 = ifelse(index %in% c(sumDhondt_female$index), female_18_59.y, female_18_59.x),
+    female_60 = ifelse(index %in% c(sumDhondt_female$index), female_60.y, female_60.x),
+    femaleAgeUnknown = ifelse(index %in% c(sumDhondt_female$index), femaleAgeUnknown.y, femaleAgeUnknown.x),
+  ) %>% 
+  full_join(sumDhondt_male , by = "index") %>% 
+  mutate(
+    male_0_4 = ifelse(index %in% c(sumDhondt_male$index), male_0_4.y, male_0_4.x),
+    male_5_11 = ifelse(index %in% c(sumDhondt_male$index), male_5_11.y, male_5_11.x),
+    male_12_17 = ifelse(index %in% c(sumDhondt_male$index), male_12_17.y, male_12_17.x),
+    male_18_24 = ifelse(index %in% c(sumDhondt_male$index), male_18_24.y, male_18_24.x),
+    male_25_49 = ifelse(index %in% c(sumDhondt_male$index), male_25_49.y, male_25_49.x),
+    male_50_59 = ifelse(index %in% c(sumDhondt_male$index), male_50_59.y, male_50_59.x),
+    male_18_59 = ifelse(index %in% c(sumDhondt_male$index), male_18_59.y, male_18_59.x),
+    male_60 = ifelse(index %in% c(sumDhondt_male$index), male_60.y, male_60.x),
+    maleAgeUnknown = ifelse(index %in% c(sumDhondt_male$index), maleAgeUnknown.y, maleAgeUnknown.x),
+  ) %>% 
+  select(index, year, asylum:populationPlanningGroup, populationTypeName, 
+         female_0_4:femaleAgeUnknown, female, 
+         male_0_4:maleAgeUnknown, male,
+         typeOfDisaggregation, typeOfDisaggregationBroad, 
+         asylum_iso3:`origin_Developed / Developing Countries`)
+  
+dim(demref2020)
 
  
-# dim(sumDhondt_female)
-# dim(sumDhondt_male)
-# sumDhondt <- sumDhondt_female %>% full_join(sumDhondt_male, by = "index")
-# dim(sumDhondt)
-# sum(duplicated(sumDhondt$index)) # ok
-
-
-
 
 # data set for population pyramids
 
