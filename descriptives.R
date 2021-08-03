@@ -220,23 +220,13 @@ table(demref2020$typeOfDisaggregation, demref2020$typeOfDisaggregationBroad)
 
 #### redistribute unknowns for Armenia and Germany with d'hondt method to allocate age unknown to sex totals:
 
-
-
-test <- as.numeric((demref2020  %>% filter(typeOfDisaggregationBroad == "Sex/Age" & (femaleAgeUnknown>0 | maleAgeUnknown > 0)) %>% 
-                      arrange(asylum, desc(femaleAgeUnknown)))[1,] %>% select(female_0_4:femaleAgeUnknown))
-testnames <- names((demref2020  %>% filter(typeOfDisaggregationBroad == "Sex/Age" & (femaleAgeUnknown>0 | maleAgeUnknown > 0)) %>% 
-                arrange(asylum, desc(femaleAgeUnknown)))[1,] %>% select(female_0_4:femaleAgeUnknown))
-testdhondt <- seats_ha(parties = testnames[c(1:3, 7:8)], votes = test[c(1:3, 7:8)], n_seats = test[9], method = "dhondt")
-
 # by row, for male and female separately, extract by index
 # 1) named vector: extract detailed or 18-59 age bracket counts plus age unknown and names (depending on detailed or 18-59)
 # 2) new named vector: unknown count allocated to age brackets 
 # 3) new named vector: d'hondt allocated plus original counts
-# 4) replace original counts with new 
+# 4) replace original counts with new counts
 
-# female unknowns
-View(demref2020  %>% filter(typeOfDisaggregationBroad == "Sex/Age" & (femaleAgeUnknown>0)) %>% select(index, asylum, asylum_country, origin, origin_country, 
-     female_0_4:femaleAgeUnknown,female, totalEndYear, typeOfDisaggregation) %>% arrange(asylum, desc(femaleAgeUnknown)))
+## female unknowns
 
 dhondt_female <- demref2020  %>% 
   filter(typeOfDisaggregationBroad == "Sex/Age" & (femaleAgeUnknown>0))  %>% 
@@ -260,13 +250,18 @@ sumDhondt_female <- dhondt_female %>%
   select(-femaleAgeUnknown, - typeOfDisaggregation) %>% 
   bind_rows(addDhondt_female) %>% 
   group_by(index) %>% 
-  summarise_all(sum, na.rm = T) %>%
+  summarise_all(sum) %>%
   ungroup() %>%
   mutate(
-  femaleAgeUnknown = 0
+  femaleAgeUnknown = 0,
+  female_18_59 = case_when(
+    is.na(female_18_59) ~ rowSums(select(., female_18_24, female_25_49, female_50_59), na.rm = T),
+    !is.na(female_18_59) ~ female_18_59,
+  )
   )
 
 
+## male unknowns
 
 dhondt_male <- demref2020  %>% 
   filter(typeOfDisaggregationBroad == "Sex/Age" & (maleAgeUnknown>0))  %>% 
@@ -290,17 +285,28 @@ sumDhondt_male <- dhondt_male %>%
   select(-maleAgeUnknown, - typeOfDisaggregation) %>% 
   bind_rows(addDhondt_male) %>% 
   group_by(index) %>% 
-  summarise_all(sum, na.rm = T) %>%
+  summarise_all(sum) %>%
   ungroup() %>%
   mutate(
-    maleAgeUnknown = 0
+    maleAgeUnknown = 0,
+    male_18_59 = case_when(
+      is.na(male_18_59) ~ rowSums(select(., male_18_24, male_25_49, male_50_59), na.rm = T),
+      !is.na(male_18_59) ~ male_18_59,
+    )
   )
 
-dim(sumDhondt_female)
-dim(sumDhondt_male)
-sumDhondt <- sumDhondt_female %>% full_join(sumDhondt_male, by = "index")
-dim(sumDhondt)
-sum(duplicated(sumDhondt$index)) # ok
+
+
+
+ 
+# dim(sumDhondt_female)
+# dim(sumDhondt_male)
+# sumDhondt <- sumDhondt_female %>% full_join(sumDhondt_male, by = "index")
+# dim(sumDhondt)
+# sum(duplicated(sumDhondt$index)) # ok
+
+
+
 
 # data set for population pyramids
 
