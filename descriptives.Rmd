@@ -10,13 +10,20 @@ output:
   word_document: default
 ---
 
+# Outline of descriptive analysis
+- Describe UNHCR official population statistics content and compilation
+- Show and explore structure of data sets: especially asylum - origin - location. 
+- Explain choice of age brackets (18-59 or finer?): show population and country coverage
+
+
+
 # Introduction
 
 
 
 
 # Data set
-- Describe UNHCR official population statistics content and compilation
+
 - 
 
 ## Descriptives of age distribution and missingness

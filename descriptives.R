@@ -27,11 +27,11 @@ library(electoral)
 options(scipen = 999)
 
 ### Other R files
-source("../../General data and resources/unhcr_style.R")
-source("../../General data and resources/functions.R")
+source("unhcr_style.R")
+source("functions_demomodels.R")
 
 ### data
-load("../../PSR/ASR 2020/data/asr_2019-2020_20210801.RData")
+load("data/asr_2019-2020_20210801.RData")
 rm(hst, idp, oth, ret, roc, rsd, sta, uasc) # remove data sets not needed
 
 
@@ -192,6 +192,7 @@ demref2020 <- demref2020 %>%
   ))
 table((demref2020$typeOfDisaggregation))
 table((demasy2020$typeOfDisaggregation))
+
 
 #### FIX LATER redistribute unknowns for Armenia and Germany ####### 
 # test d'hondt to allocate age unknown to sex totals:
