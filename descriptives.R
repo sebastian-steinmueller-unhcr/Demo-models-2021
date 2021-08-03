@@ -40,7 +40,7 @@ rm(hst, idp, oth, ret, roc, rsd, sta, uasc) # remove data sets not needed
 ## check: is there 18-59 age bracket data for "detailed" aggregation type, and does it match the finer age brackets for this group?
 
 dem.check1859 <- dem %>% 
-  filter(typeOfAggregation == "Detailed") %>% 
+  filter(typeOfDisaggregation == "Detailed") %>% 
   mutate(populationType = case_when(
     populationType == "ROC" ~ "REF",
     populationType != "ROC" ~ as.character(populationType)
@@ -90,25 +90,26 @@ t.dem.check1859.male <- dem.check1859 %>%
 ## check: why so many NAs in totalEndYear?
 # View(dem %>% filter(year == 2020, is.na(totalEndYear))) # appear to be entries in demo table where population group table had end-year value of 0 (check with DAS unit)
 
-## check: NAs in typeOfAggregation
-# View(dem %>% filter(year == 2020, is.na(typeOfAggregation))) # none in 2020 data
+## check: NAs in typeOfDisaggregation
+# View(dem %>% filter(year == 2020, is.na(typeOfDisaggregation))) # none in 2020 data
 
 
 dem <- dem %>% 
   filter(!is.na(totalEndYear)) %>%  # check with DAS unit why so many NA values here
-#  mutate(typeOfAggregation = if_else(is.na(typeOfAggregation), "Total", typeOfAggregation)) %>%
-  mutate(typeOfDisaggregation = case_when(
-    typeOfAggregation == "Detailed" | typeOfAggregation == "M/F and 18-59" ~ "Sex/Age",
-    typeOfAggregation == "M/F" ~ "Sex",
-    typeOfAggregation == "Total" ~ "None"
+#  mutate(typeOfDisaggregation = if_else(is.na(typeOfDisaggregation), "Total", typeOfDisaggregation)) %>%
+  rename(typeOfDisaggregation = typeOfAggregation) %>% 
+  mutate(typeOfDisaggregationBroad = case_when(
+    typeOfDisaggregation == "Detailed" | typeOfDisaggregation == "M/F and 18-59" ~ "Sex/Age",
+    typeOfDisaggregation == "M/F" ~ "Sex",
+    typeOfDisaggregation == "Total" ~ "None"
   ),
   female_18_59 = case_when(
-    typeOfAggregation == "Detailed" ~ rowSums(select(., female_18_24, female_25_49, female_50_59), na.rm = T),
-    typeOfAggregation != "Detailed" ~ female_18_59,
+    typeOfDisaggregation == "Detailed" ~ rowSums(select(., female_18_24, female_25_49, female_50_59), na.rm = T),
+    typeOfDisaggregation != "Detailed" ~ female_18_59,
     ),
   male_18_59 = case_when(
-    typeOfAggregation == "Detailed" ~ rowSums(select(., male_18_24, male_25_49, male_50_59), na.rm = T),
-    typeOfAggregation != "Detailed" ~ male_18_59,
+    typeOfDisaggregation == "Detailed" ~ rowSums(select(., male_18_24, male_25_49, male_50_59), na.rm = T),
+    typeOfDisaggregation != "Detailed" ~ male_18_59,
     )
   ) %>% 
   mutate(populationType = case_when(
@@ -127,23 +128,23 @@ dem <- dem %>%
 # check coverage by population type
 t.dem2020.reg.cov <- dem %>% 
   mutate(populationTypeName = factor(populationTypeName ),
-         typeOfDisaggregation = factor(typeOfDisaggregation )) %>%
+         typeOfDisaggregationBroad = factor(typeOfDisaggregationBroad )) %>%
   filter(year == 2020) %>% 
-  group_by(asylum_main_office_short, populationTypeName, typeOfDisaggregation) %>% 
+  group_by(asylum_main_office_short, populationTypeName, typeOfDisaggregationBroad) %>% 
   summarise(totalEndYear = sum(totalEndYear, na.rm = T)) %>%
   mutate(freq.totalEndYear = round(totalEndYear/sum(totalEndYear)*100)) %>% 
-  filter(typeOfDisaggregation == "Sex/Age") %>% 
+  filter(typeOfDisaggregationBroad == "Sex/Age") %>% 
   pivot_wider(names_from = populationTypeName, values_from = freq.totalEndYear, id_cols = asylum_main_office_short) 
   
   
 t.dem2020.cov <- dem %>% 
   mutate(populationTypeName = factor(populationTypeName ),
-         typeOfDisaggregation = factor(typeOfDisaggregation )) %>%
+         typeOfDisaggregationBroad = factor(typeOfDisaggregationBroad )) %>%
   filter(year == 2020) %>% 
-  group_by(populationTypeName, typeOfDisaggregation) %>% 
+  group_by(populationTypeName, typeOfDisaggregationBroad) %>% 
   summarise(totalEndYear = sum(totalEndYear, na.rm = T)) %>%
   mutate(freq.totalEndYear = round(totalEndYear/sum(totalEndYear)*100), asylum_main_office_short = "WORLD") %>% 
-  filter(typeOfDisaggregation == "Sex/Age") %>% 
+  filter(typeOfDisaggregationBroad == "Sex/Age") %>% 
   pivot_wider(names_from = populationTypeName, values_from = freq.totalEndYear, id_cols = asylum_main_office_short) 
 
 t.dem2020.reg.cov <- t.dem2020.reg.cov %>% 
@@ -163,12 +164,12 @@ demasy2020 <- dem %>%
 
 # clean demref2020 data for some asylum countries with disaggregated data but unknown ages:
 
-#   View(demref2020  %>% filter(typeOfDisaggregation == "Sex/Age" & (femaleAgeUnknown>0 | maleAgeUnknown > 0)) %>% select(asylum, asylum_country, origin, origin_country, 
+#   View(demref2020  %>% filter(typeOfDisaggregationBroad == "Sex/Age" & (femaleAgeUnknown>0 | maleAgeUnknown > 0)) %>% select(asylum, asylum_country, origin, origin_country, 
 #          femaleAgeUnknown,female, maleAgeUnknown , male, totalEndYear) %>% arrange(asylum, desc(femaleAgeUnknown)))
 
 
 t.checkunknowns.ref <- demref2020 %>% 
-  filter(typeOfDisaggregation == "Sex/Age") %>% 
+  filter(typeOfDisaggregationBroad == "Sex/Age") %>% 
   summarise(totalEndYear = sum(totalEndYear, na.rm = T),
             femaleAgeUnknown = sum(femaleAgeUnknown, na.rm = T),
             maleAgeUnknown = sum(maleAgeUnknown, na.rm = T)) %>% 
@@ -176,7 +177,7 @@ t.checkunknowns.ref <- demref2020 %>%
          freq.ageUnknown = ageUnknown/totalEndYear)
 
 t.checkunknowns.asy <- demasy2020 %>% 
-  filter(typeOfDisaggregation == "Sex/Age") %>% 
+  filter(typeOfDisaggregationBroad == "Sex/Age") %>% 
   summarise(totalEndYear = sum(totalEndYear, na.rm = T),
             femaleAgeUnknown = sum(femaleAgeUnknown, na.rm = T),
             maleAgeUnknown = sum(maleAgeUnknown, na.rm = T)) %>% 
@@ -184,21 +185,21 @@ t.checkunknowns.asy <- demasy2020 %>%
          freq.ageUnknown = ageUnknown/totalEndYear)
 
 
-table((demref2020$typeOfDisaggregation))
+table((demref2020$typeOfDisaggregationBroad))
 demref2020 <- demref2020 %>% 
-  mutate(typeOfDisaggregation = case_when(
-    asylum %in% c("CAN", "UKR", "PHI", "NIC") & typeOfDisaggregation == "Sex/Age" &  (femaleAgeUnknown>0 | maleAgeUnknown > 0) ~ "Sex", # (almost) all are unknown for these rows, thus assuming age distribution not available. Canada: SDC makes age data unusable 
-    !(asylum %in% c("CAN", "UKR", "PHI", "NIC") & typeOfDisaggregation == "Sex/Age" &  (femaleAgeUnknown>0 | maleAgeUnknown > 0) ) ~ typeOfDisaggregation
+  mutate(typeOfDisaggregationBroad = case_when(
+    asylum %in% c("CAN", "UKR", "PHI", "NIC") & typeOfDisaggregationBroad == "Sex/Age" &  (femaleAgeUnknown>0 | maleAgeUnknown > 0) ~ "Sex", # (almost) all are unknown for these rows, thus assuming age distribution not available. Canada: SDC makes age data unusable 
+    !(asylum %in% c("CAN", "UKR", "PHI", "NIC") & typeOfDisaggregationBroad == "Sex/Age" &  (femaleAgeUnknown>0 | maleAgeUnknown > 0) ) ~ typeOfDisaggregationBroad
   ))
-table((demref2020$typeOfDisaggregation))
-table((demasy2020$typeOfDisaggregation))
+table((demref2020$typeOfDisaggregationBroad))
+table((demasy2020$typeOfDisaggregationBroad))
 
 
 #### FIX LATER redistribute unknowns for Armenia and Germany ####### 
 # test d'hondt to allocate age unknown to sex totals:
-test <- as.numeric((demref2020  %>% filter(typeOfDisaggregation == "Sex/Age" & (femaleAgeUnknown>0 | maleAgeUnknown > 0)) %>% 
+test <- as.numeric((demref2020  %>% filter(typeOfDisaggregationBroad == "Sex/Age" & (femaleAgeUnknown>0 | maleAgeUnknown > 0)) %>% 
                       arrange(asylum, desc(femaleAgeUnknown)))[1,] %>% select(female_0_4:femaleAgeUnknown))
-testnames <- names((demref2020  %>% filter(typeOfDisaggregation == "Sex/Age" & (femaleAgeUnknown>0 | maleAgeUnknown > 0)) %>% 
+testnames <- names((demref2020  %>% filter(typeOfDisaggregationBroad == "Sex/Age" & (femaleAgeUnknown>0 | maleAgeUnknown > 0)) %>% 
                 arrange(asylum, desc(femaleAgeUnknown)))[1,] %>% select(female_0_4:femaleAgeUnknown))
 seats_ha(parties = testnames[c(1:5)], votes = test[c(1:5)], n_seats = test[6], method = "dhondt")
 
@@ -241,8 +242,8 @@ table(dem$year, useNA = "ifany")
 
 
 
-t.typeOfDisaggregation <- demref2020 %>% 
-  group_by(typeOfDisaggregation) %>% 
+t.typeOfDisaggregationBroad <- demref2020 %>% 
+  group_by(typeOfDisaggregationBroad) %>% 
   summarise(totalEndYear = sum(totalEndYear, na.rm = T),
             nAsylum = n_distinct(asylum)) %>% 
   mutate(freq.totalEndYear = totalEndYear/sum(totalEndYear),
@@ -251,49 +252,49 @@ t.typeOfDisaggregation <- demref2020 %>%
 
 # show type of disaggregation by origin (show for safe pathway countries in figure)
 
-t.typeOfDisaggregation.ori <- demref2020 %>% 
-  group_by(`origin_Sub-region Name`, origin, origin_iso3, origin_country,  typeOfDisaggregation) %>% 
+t.typeOfDisaggregationBroad.ori <- demref2020 %>% 
+  group_by(`origin_Sub-region Name`, origin, origin_iso3, origin_country,  typeOfDisaggregationBroad) %>% 
   summarise(totalEndYear = sum(totalEndYear, na.rm = T),
             nAsylum = n_distinct(asylum)) %>% 
   mutate(freq.totalEndYear = totalEndYear/sum(totalEndYear),
          freq.asylum = nAsylum / sum(nAsylum))
 
 #  View(demref2020 %>% filter(origin == "VEN") %>% 
-#         select(origin_country, asylum_country, totalEndYear, typeOfDisaggregation,
+#         select(origin_country, asylum_country, totalEndYear, typeOfDisaggregationBroad,
 #                female_0_4:female_12_17, female_18_59, female_60, femaleAgeUnknown, female,
 #                male_0_4:male_12_17, male_18_59, male_60, maleAgeUnknown, male))
 # View(demref2020 %>% filter(origin == "VEN", asylum == "CHL"))
-# View(t.typeOfDisaggregation.ori %>% filter(origin == "VEN"))
+# View(t.typeOfDisaggregationBroad.ori %>% filter(origin == "VEN"))
 
-p.typeOfDisaggregation.ori.safepw <- ggplot(data = t.typeOfDisaggregation.ori %>% filter(origin %in% c("VEN", "SYR", "AFG", "ERT", "SOM", "IRN", "IRQ")),
-                                            aes(x = typeOfDisaggregation, y = freq.totalEndYear, fill = typeOfDisaggregation)) +
+p.typeOfDisaggregationBroad.ori.safepw <- ggplot(data = t.typeOfDisaggregationBroad.ori %>% filter(origin %in% c("VEN", "SYR", "AFG", "ERT", "SOM", "IRN", "IRQ")),
+                                            aes(x = typeOfDisaggregationBroad, y = freq.totalEndYear, fill = typeOfDisaggregationBroad)) +
   geom_bar( width= 0.5, stat="identity", position=position_dodge(width=0.6)) +
   facet_wrap(~  `origin_country`, ncol = 4, scales = "free")
 
 
 # type of disaggregation by origin and asylum region
 
-t.typeOfDisaggregation.ori.asysubreg <- demref2020 %>% 
-  group_by(`origin_Sub-region Name`, origin, origin_iso3, origin_country, `asylum_Sub-region Name`,  typeOfDisaggregation) %>% 
+t.typeOfDisaggregationBroad.ori.asysubreg <- demref2020 %>% 
+  group_by(`origin_Sub-region Name`, origin, origin_iso3, origin_country, `asylum_Sub-region Name`,  typeOfDisaggregationBroad) %>% 
   summarise(totalEndYear = sum(totalEndYear, na.rm = T),
             nAsylum = n_distinct(asylum)) %>% 
   mutate(freq.totalEndYear = totalEndYear/sum(totalEndYear),
          freq.asylum = nAsylum / sum(nAsylum))
 
 
-t.typeOfDisaggregation.ori.asyreg <- demref2020 %>% 
-  group_by(`origin_Sub-region Name`, origin, origin_iso3, origin_country, `asylum_Region Name`,  typeOfDisaggregation) %>% 
+t.typeOfDisaggregationBroad.ori.asyreg <- demref2020 %>% 
+  group_by(`origin_Sub-region Name`, origin, origin_iso3, origin_country, `asylum_Region Name`,  typeOfDisaggregationBroad) %>% 
   summarise(totalEndYear = sum(totalEndYear, na.rm = T),
             nAsylum = n_distinct(asylum)) %>% 
   mutate(freq.totalEndYear = totalEndYear/sum(totalEndYear),
          freq.asylum = nAsylum / sum(nAsylum))
 
-p.typeOfDisaggregation.ori.asyreg <- ggplot(data = t.typeOfDisaggregation.ori.asyreg %>% 
+p.typeOfDisaggregationBroad.ori.asyreg <- ggplot(data = t.typeOfDisaggregationBroad.ori.asyreg %>% 
                                                     filter(origin %in% c("VEN", "MYA", "SYR", "AFG", "ERT", "SOM", "IRN", "IRQ"), 
                                                     !is.na(`asylum_Region Name`) ),
                                             aes(x = fct_reorder(`asylum_Region Name`, desc(`asylum_Region Name`)), 
                                                 y = freq.totalEndYear, 
-                                                fill = typeOfDisaggregation )) +
+                                                fill = typeOfDisaggregationBroad )) +
   geom_bar( position = "stack", stat="identity") +
   coord_flip() +
   facet_wrap(~  `origin_country`, ncol = 4, scales = "free")
