@@ -38,14 +38,15 @@ rm(hst, idp, oth, ret, roc, rsd, sta, uasc) # remove data sets not needed
 ##### II. Checks, new variables and data cleaning for modelling ##### 
 
 
-## consistent variable naming, new disaggregation variable
+## consistent variable naming, new disaggregation variable, index variable
 dem <-  dem %>%
   rename(typeOfDisaggregation = typeOfAggregation) %>% 
   mutate(typeOfDisaggregationBroad = case_when(
     typeOfDisaggregation == "Detailed" | typeOfDisaggregation == "M/F and 18-59" ~ "Sex/Age",
     typeOfDisaggregation == "M/F" ~ "Sex",
     typeOfDisaggregation == "Total" ~ "None"
-    )
+    ),
+    index = seq(1:n())
   )
 
 
@@ -217,9 +218,7 @@ table(demref2020$typeOfDisaggregationBroad)
 table(demref2020$typeOfDisaggregation, demref2020$typeOfDisaggregationBroad)
 
 
-#### redistribute unknowns for Armenia and Germany with d'hondt method
-# test d'hondt to allocate age unknown to sex totals:
-
+#### redistribute unknowns for Armenia and Germany with d'hondt method to allocate age unknown to sex totals:
 
 
 
@@ -227,10 +226,32 @@ test <- as.numeric((demref2020  %>% filter(typeOfDisaggregationBroad == "Sex/Age
                       arrange(asylum, desc(femaleAgeUnknown)))[1,] %>% select(female_0_4:femaleAgeUnknown))
 testnames <- names((demref2020  %>% filter(typeOfDisaggregationBroad == "Sex/Age" & (femaleAgeUnknown>0 | maleAgeUnknown > 0)) %>% 
                 arrange(asylum, desc(femaleAgeUnknown)))[1,] %>% select(female_0_4:femaleAgeUnknown))
-seats_ha(parties = testnames[c(1:3, 7:8)], votes = test[c(1:3, 7:8)], n_seats = test[9], method = "dhondt")
+testdhondt <- seats_ha(parties = testnames[c(1:3, 7:8)], votes = test[c(1:3, 7:8)], n_seats = test[9], method = "dhondt")
+
+# by row, for male and female separately, extract by index
+# 1) named vector: extract detailed or 18-59 age bracket counts plus age unknown and names (depending on detailed or 18-59)
+# 2) new named vector: unknown count allocated to age brackets 
+# 3) new named vector: d'hondt allocated plus original counts
+# 4) replace original counts with new 
+
+# female unknowns
+View(demref2020  %>% filter(typeOfDisaggregationBroad == "Sex/Age" & (femaleAgeUnknown>0)) %>% select(index, asylum, asylum_country, origin, origin_country, 
+     female_0_4:femaleAgeUnknown,female, totalEndYear, typeOfDisaggregation) %>% arrange(asylum, desc(femaleAgeUnknown)))
+
+dhondt_female <- demref2020  %>% 
+  filter(typeOfDisaggregationBroad == "Sex/Age" & (femaleAgeUnknown>0)) %>% 
+  select(index, female_0_4:femaleAgeUnknown, typeOfDisaggregation)
 
 
-
+for(i in 1:nrow(dhondt_female)){
+  index.i <- dhondt_female[i,"index"]
+  if(dhondt_female[i,"typeOfDisaggregation"] == "Detailed")
+          x <- select(dhondt_female[i,], female_0_4:female_50_59, female_60, femaleAgeUnknown) else
+          x <- select(dhondt_female[i,], female_0_4:female_12_17, female_18_59, female_60, femaleAgeUnknown)
+  x.dhondt <- seats_ha(parties = names(x)[1:(length(x)-1)], votes = as.numeric(x[1:(length(x)-1)]), n_seats = as.numeric(x[length(x)]), method = "dhondt")
+  
+  
+}
 
 
 # data set for population pyramids
