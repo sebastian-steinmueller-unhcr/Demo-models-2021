@@ -205,12 +205,12 @@ t.checkunknowns.ref <- demref2020 %>%
 # (almost) all are unknown for the following asylum country entries, thus assuming age distribution not available. Canada: statistical disclosure control makes age data unusable
 demref2020 <- demref2020 %>% 
   mutate(typeOfDisaggregationBroad = case_when(
-    asylum %in% c("CAN", "UKR", "PHI", "NIC") & typeOfDisaggregationBroad == "Sex/Age" &  (femaleAgeUnknown>0 | maleAgeUnknown > 0) ~ "Sex",  
-    !(asylum %in% c("CAN", "UKR", "PHI", "NIC") & typeOfDisaggregationBroad == "Sex/Age" &  (femaleAgeUnknown>0 | maleAgeUnknown > 0) ) ~ typeOfDisaggregationBroad
+    asylum %in% c("CAN", "UKR", "PHI", "NIC") & typeOfDisaggregationBroad == "Sex/Age" &  (femaleAgeUnknown>0 | maleAgeUnknown > 0 | is.na(femaleAgeUnknown) | is.na(maleAgeUnknown)) ~ "Sex",  
+    !(asylum %in% c("CAN", "UKR", "PHI", "NIC") & typeOfDisaggregationBroad == "Sex/Age" &  (femaleAgeUnknown>0 | maleAgeUnknown > 0 | is.na(femaleAgeUnknown) | is.na(maleAgeUnknown)) ) ~ typeOfDisaggregationBroad
   ),
   typeOfDisaggregation = case_when(
-    asylum %in% c("CAN", "UKR", "PHI", "NIC") & typeOfDisaggregation %in% c("Detailed", "M/F and 18-59") &  (femaleAgeUnknown>0 | maleAgeUnknown > 0) ~ "M/F",  
-    !(asylum %in% c("CAN", "UKR", "PHI", "NIC") & typeOfDisaggregation %in% c("Detailed", "M/F and 18-59") &  (femaleAgeUnknown>0 | maleAgeUnknown > 0) ) ~ typeOfDisaggregation
+    asylum %in% c("CAN", "UKR", "PHI", "NIC") & typeOfDisaggregation %in% c("Detailed", "M/F and 18-59") &  (femaleAgeUnknown>0 | maleAgeUnknown > 0 | is.na(femaleAgeUnknown) | is.na(maleAgeUnknown)) ~ "M/F",  
+    !(asylum %in% c("CAN", "UKR", "PHI", "NIC") & typeOfDisaggregation %in% c("Detailed", "M/F and 18-59") &  (femaleAgeUnknown>0 | maleAgeUnknown > 0 | is.na(femaleAgeUnknown) | is.na(maleAgeUnknown)) ) ~ typeOfDisaggregation
     )
   )
 
@@ -329,6 +329,7 @@ demref2020 <- demref2020 %>%
   select(index, year, asylum:populationPlanningGroup, populationTypeName, 
          female_0_4:femaleAgeUnknown, female, 
          male_0_4:maleAgeUnknown, male,
+         totalEndYear, unhcrAssistedEndYear,
          typeOfDisaggregation, typeOfDisaggregationBroad, 
          asylum_iso3:`origin_Developed / Developing Countries`)
   
@@ -369,8 +370,6 @@ t.demref2020pyr.asy.ori <-  demref2020 %>%
 table(dem$populationType, useNA = "ifany")
 table(dem$year, useNA = "ifany")
 
-
-
 t.typeOfDisaggregationBroad <- demref2020 %>% 
   group_by(typeOfDisaggregationBroad) %>% 
   summarise(totalEndYear = sum(totalEndYear, na.rm = T),
@@ -378,6 +377,14 @@ t.typeOfDisaggregationBroad <- demref2020 %>%
   mutate(freq.totalEndYear = totalEndYear/sum(totalEndYear),
          freq.asylum = nAsylum / sum(nAsylum))
   
+t.typeOfDisaggregation <- demref2020 %>% 
+  group_by(typeOfDisaggregation) %>% 
+  summarise(totalEndYear = sum(totalEndYear, na.rm = T),
+            nAsylum = n_distinct(asylum)) %>% 
+  mutate(freq.totalEndYear = totalEndYear/sum(totalEndYear),
+         freq.asylum = nAsylum / sum(nAsylum))
+
+
 
 # show type of disaggregation by origin (show for safe pathway countries in figure)
 
