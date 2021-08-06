@@ -10,6 +10,19 @@ output:
   word_document: default
 ---
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE
+)
+## run code to create descriptive figures and tables
+
+source("descriptives.R")
+
+```
+
+
 # Outline of descriptive analysis
 - Describe UNHCR official population statistics content and compilation
 - Show and explore structure of data sets: especially asylum - origin - location. 
@@ -23,23 +36,19 @@ output:
 
 
 # Data set
+UNHCR compiles official statistics on stocks and flows of forcibly displaced and stateless persons twice a year, once for mid-year figures (Mid-Year Statistical Reporting, MYSR) and once for end-year figures (Annual Statistical Reporting, ASR). For these reporting exercises, country operations compile aggregate population figures from a range of sources and data producers such as governments, UNHCR's own refugee registration database proGres and sometimes non-governmental actors. The figures undergo a statistical quality control process at the country, regional and global level of the organisation and are disseminated on the publicly available refugee data finder (https://www.unhcr.org/refugee-statistics/) after undergoing a light statistical disclosure control process to suppress very small counts of persons that could identify individuals. 
 
-- 
+The end-year figures compiled with reporting date 30 December contain sex- and age breakdowns of the stocks of displaced and stateless people under UNHCR's mandate. Agr brackets 
+ 
+```{r  rows.print=5, rownames.print = F}
+demref2020 %>% select(2:32)
+``` 
+ 
 
 ## Descriptives of age distribution and missingness
 
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(
-	echo = TRUE,
-	message = FALSE,
-	warning = FALSE
-)
-## run code to create descriptive figures and tables
 
-source("descriptives.R")
-
-```
 
 
 
@@ -63,7 +72,7 @@ By CoO
 - % age and sex missing
 
 ```{r, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap='Demographic disaggregation coverage by origin country and asylum region'}
-p.typeOfDisaggregation.ori.asyreg
+p.typeOfDisaggregationBroad.ori.asyreg
 
 ```
 

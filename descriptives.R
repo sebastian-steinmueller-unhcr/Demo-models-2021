@@ -425,7 +425,7 @@ t.typeOfDisaggregationBroad.ori.asyreg <- demref2020 %>%
   mutate(freq.totalEndYear = totalEndYear/sum(totalEndYear),
          freq.asylum = nAsylum / sum(nAsylum))
 
-p.typeOfDisaggregationBroad.ori.asyreg <- ggplot(data = t.typeOfDisaggregationBroad.ori.asyreg %>% 
+p.typeOfDisaggregation.ori.asyreg <- ggplot(data = t.typeOfDisaggregationBroad.ori.asyreg %>% 
                                                     filter(origin %in% c("VEN", "MYA", "SYR", "AFG", "ERT", "SOM", "IRN", "IRQ"), 
                                                     !is.na(`asylum_Region Name`) ),
                                             aes(x = fct_reorder(`asylum_Region Name`, desc(`asylum_Region Name`)), 
