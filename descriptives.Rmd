@@ -26,6 +26,7 @@ source("descriptives.R")
 # Outline of descriptive analysis
 - Describe UNHCR official population statistics content and compilation
 - Show and explore structure of data sets: especially asylum - origin - location. 
+- Show origin and asylum country structure in missing and non-missing demographic data
 - Explain choice of age brackets (18-59 or finer?): show population and country coverage
 
 
