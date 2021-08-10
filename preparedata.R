@@ -359,7 +359,7 @@ origin_countries <- countries %>%
 asylum_countries <- countries %>%
   rename_all( ~ paste0("asylum_", .))
 
-save(demref2020,  origin_countries, asylum_countries, file = "demref2020.RData")
+save(demref2020,  origin_countries, asylum_countries, file = "data/demref2020.RData")
 # save(demasy2020,  origin_countries, asylum_countries, file = "demasy2020.RData")
 
 ############################################ END ###########################################################
