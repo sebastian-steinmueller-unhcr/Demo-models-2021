@@ -43,19 +43,26 @@ rm(hst, idp, oth, ret, roc, rsd, sta, uasc) # remove data sets not needed
 ## consistent variable naming, new disaggregation variable, index variable
 dem <-  dem %>%
   rename(typeOfDisaggregation = typeOfAggregation) %>% 
+  mutate(typeOfDisaggregation = recode(typeOfDisaggregation,
+    `Detailed` = "Sex/Age fine",
+    `M/F and 18-59` = "Sex/Age broad",
+    `M/F` = "Sex",
+    `Total` = "None"
+    )
+  ) %>%
   mutate(typeOfDisaggregationBroad = case_when(
-    typeOfDisaggregation == "Detailed" | typeOfDisaggregation == "M/F and 18-59" ~ "Sex/Age",
-    typeOfDisaggregation == "M/F" ~ "Sex",
-    typeOfDisaggregation == "Total" ~ "None"
+    typeOfDisaggregation == "Sex/Age fine" | typeOfDisaggregation == "Sex/Age broad" ~ "Sex/Age",
+    typeOfDisaggregation == "Sex" ~ "Sex",
+    typeOfDisaggregation == "None" ~ "None"
     ),
     index = seq(1:n())
   )
 
 
-## check: is there 18-59 age bracket data for "detailed" aggregation type, and does it match the finer age brackets for this group?
+## check: is there 18-59 age bracket data for "Sex/Age fine" aggregation type, and does it match the finer age brackets for this group?
 
 dem.check1859 <- dem %>% 
-  filter(typeOfDisaggregation == "Detailed") %>% 
+  filter(typeOfDisaggregation == "Sex/Age fine") %>% 
   mutate(populationType = case_when(
     populationType == "ROC" ~ "REF",
     populationType != "ROC" ~ as.character(populationType)
@@ -100,7 +107,7 @@ t.dem.check1859.male <- dem.check1859 %>%
 # write.xlsx(dem.check1859.discrepancy, "descriptive outputs/dem.check1859.discrepancy.xlsx") # this line only for sending discrepancy overview to ASR team
 
 ### check results: small and few discrepancies, orders of magnitude are all correct. 
-### Re-populate the 18-59 bracket with the individual ones for "detailed" rows to be on the safe side and have data for the few with NA in 18-59 groups
+### Re-populate the 18-59 bracket with the individual ones for "Sex/Age fine" rows to be on the safe side and have data for the few with NA in 18-59 groups
 
 ## check: why so many NAs in totalEndYear?
 # View(dem %>% filter(year == 2020, is.na(totalEndYear))) # appear to be entries in demo table where population group table had end-year value of 0 (check with DAS unit)
@@ -111,19 +118,19 @@ t.dem.check1859.male <- dem.check1859 %>%
 
 dem <- dem %>% 
   filter(!is.na(totalEndYear)) %>%  # check with DAS unit why so many NA values here
-#  mutate(typeOfDisaggregation = if_else(is.na(typeOfDisaggregation), "Total", typeOfDisaggregation)) %>%
+#  mutate(typeOfDisaggregation = if_else(is.na(typeOfDisaggregation), "None", typeOfDisaggregation)) %>%
   mutate(typeOfDisaggregationBroad = case_when(
-    typeOfDisaggregation == "Detailed" | typeOfDisaggregation == "M/F and 18-59" ~ "Sex/Age",
-    typeOfDisaggregation == "M/F" ~ "Sex",
-    typeOfDisaggregation == "Total" ~ "None"
+    typeOfDisaggregation == "Sex/Age fine" | typeOfDisaggregation == "Sex/Age broad" ~ "Sex/Age",
+    typeOfDisaggregation == "Sex" ~ "Sex",
+    typeOfDisaggregation == "None" ~ "None"
   ),
   female_18_59 = case_when(
-    typeOfDisaggregation == "Detailed" ~ rowSums(select(., female_18_24, female_25_49, female_50_59), na.rm = T),
-    typeOfDisaggregation != "Detailed" ~ female_18_59,
+    typeOfDisaggregation == "Sex/Age fine" ~ rowSums(select(., female_18_24, female_25_49, female_50_59), na.rm = T),
+    typeOfDisaggregation != "Sex/Age fine" ~ female_18_59,
     ),
   male_18_59 = case_when(
-    typeOfDisaggregation == "Detailed" ~ rowSums(select(., male_18_24, male_25_49, male_50_59), na.rm = T),
-    typeOfDisaggregation != "Detailed" ~ male_18_59,
+    typeOfDisaggregation == "Sex/Age fine" ~ rowSums(select(., male_18_24, male_25_49, male_50_59), na.rm = T),
+    typeOfDisaggregation != "Sex/Age fine" ~ male_18_59,
     )
   ) %>% 
   mutate(populationType = case_when(
@@ -211,8 +218,8 @@ demref2020 <- demref2020 %>%
     !(asylum %in% c("CAN", "UKR", "PHI", "NIC") & typeOfDisaggregationBroad == "Sex/Age" &  (femaleAgeUnknown>0 | maleAgeUnknown > 0 | is.na(femaleAgeUnknown) | is.na(maleAgeUnknown)) ) ~ typeOfDisaggregationBroad
   ),
   typeOfDisaggregation = case_when(
-    asylum %in% c("CAN", "UKR", "PHI", "NIC") & typeOfDisaggregation %in% c("Detailed", "M/F and 18-59") &  (femaleAgeUnknown>0 | maleAgeUnknown > 0 | is.na(femaleAgeUnknown) | is.na(maleAgeUnknown)) ~ "M/F",  
-    !(asylum %in% c("CAN", "UKR", "PHI", "NIC") & typeOfDisaggregation %in% c("Detailed", "M/F and 18-59") &  (femaleAgeUnknown>0 | maleAgeUnknown > 0 | is.na(femaleAgeUnknown) | is.na(maleAgeUnknown)) ) ~ typeOfDisaggregation
+    asylum %in% c("CAN", "UKR", "PHI", "NIC") & typeOfDisaggregation %in% c("Sex/Age fine", "Sex/Age broad") &  (femaleAgeUnknown>0 | maleAgeUnknown > 0 | is.na(femaleAgeUnknown) | is.na(maleAgeUnknown)) ~ "Sex",  
+    !(asylum %in% c("CAN", "UKR", "PHI", "NIC") & typeOfDisaggregation %in% c("Sex/Age fine", "Sex/Age broad") &  (femaleAgeUnknown>0 | maleAgeUnknown > 0 | is.na(femaleAgeUnknown) | is.na(maleAgeUnknown)) ) ~ typeOfDisaggregation
     )
   )
 
@@ -220,10 +227,10 @@ table(demref2020$typeOfDisaggregationBroad)
 table(demref2020$typeOfDisaggregation, demref2020$typeOfDisaggregationBroad)
 
 
-#### redistribute unknowns for Armenia and Germany with d'hondt method to allocate age unknown to sex totals:
+#### redistribute unknowns for Armenia and Germany with d'hondt method to allocate age unknown to sex Nones:
 
 # by row, for male and female separately, extract by index
-# 1) named vector: extract detailed or 18-59 age bracket counts plus age unknown and names (depending on detailed or 18-59)
+# 1) named vector: extract Sex/Age fine or 18-59 age bracket counts plus age unknown and names (depending on Sex/Age fine or 18-59)
 # 2) new named vector: unknown count allocated to age brackets 
 # 3) new named vector: d'hondt allocated plus original counts
 # 4) replace original counts with new counts
@@ -238,7 +245,7 @@ addDhondt_female <- dhondt_female[FALSE,] %>% select(-femaleAgeUnknown, - typeOf
 
 for(i in 1:nrow(dhondt_female)){
   index.i <- dhondt_female[i,"index"]
-  if(dhondt_female[i,"typeOfDisaggregation"] == "Detailed")
+  if(dhondt_female[i,"typeOfDisaggregation"] == "Sex/Age fine")
           x <- select(dhondt_female[i,], female_0_4:female_50_59, female_60, femaleAgeUnknown) else
           x <- select(dhondt_female[i,], female_0_4:female_12_17, female_18_59, female_60, femaleAgeUnknown)
   x.dhondt <-seats_ha(parties = names(x)[1:(length(x)-1)], 
@@ -273,7 +280,7 @@ addDhondt_male <- dhondt_male[FALSE,] %>% select(-maleAgeUnknown, - typeOfDisagg
 
 for(i in 1:nrow(dhondt_male)){
   index.i <- dhondt_male[i,"index"]
-  if(dhondt_male[i,"typeOfDisaggregation"] == "Detailed")
+  if(dhondt_male[i,"typeOfDisaggregation"] == "Sex/Age fine")
     x <- select(dhondt_male[i,], male_0_4:male_50_59, male_60, maleAgeUnknown) else
       x <- select(dhondt_male[i,], male_0_4:male_12_17, male_18_59, male_60, maleAgeUnknown)
     x.dhondt <-seats_ha(parties = names(x)[1:(length(x)-1)], 
@@ -337,6 +344,15 @@ demref2020 <- demref2020 %>%
     female_adults = rowSums(select(.,female_18_59, female_60), na.rm = T),
     male_children = rowSums(select(., male_0_4, male_5_11, male_12_17), na.rm = T),
     male_adults = rowSums(select(.,male_18_59, male_60), na.rm = T)
+  ) %>%
+  mutate(
+    typeOfDisaggregation = as.factor(typeOfDisaggregation),
+    typeOfDisaggregationBroad = as.factor(typeOfDisaggregationBroad),
+    urbanRural = as.factor(urbanRural),
+    accommodationType = as.factor(accommodationType),
+    populationType = as.factor(populationType),
+    statelessStatus = as.factor(statelessStatus),
+    populationTypeName = as.factor(populationTypeName)
   ) %>%
   select(index, year, asylum:populationPlanningGroup, populationTypeName, 
          female_0_4:femaleAgeUnknown, female_children, female_adults, female, 
