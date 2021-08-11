@@ -117,7 +117,7 @@ t.dem.check1859.male <- dem.check1859 %>%
 
 
 dem <- dem %>% 
-  filter(!is.na(totalEndYear)) %>%  # check with DAS unit why so many NA values here
+  filter(!is.na(totalEndYear) & totalEndYear != 0) %>%  # check with DAS unit why so many NA values here
 #  mutate(typeOfDisaggregation = if_else(is.na(typeOfDisaggregation), "None", typeOfDisaggregation)) %>%
   mutate(typeOfDisaggregationBroad = case_when(
     typeOfDisaggregation == "Sex/Age fine" | typeOfDisaggregation == "Sex/Age broad" ~ "Sex/Age",
