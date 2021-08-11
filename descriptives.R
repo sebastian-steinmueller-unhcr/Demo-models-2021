@@ -22,6 +22,7 @@ library(gridExtra)
 library(cowplot)
 library(ggExtra)
 library(electoral)
+library(bookdown)
 
 ### options
 options(scipen = 999)
