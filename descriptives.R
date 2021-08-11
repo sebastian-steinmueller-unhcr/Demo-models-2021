@@ -4,7 +4,7 @@
 
 #### Queries: UNHCR Statistics and Demographics Section, Sebastian, steinmul@unhcr.org
 #### Project: Demographic models 2021 (after GT)
-#### Description: Data preparation plus descriptive analysis and visualisation of ASR 2020 REF + VDA demographic data 
+#### Description: Descriptive analysis and visualisation of ASR 2020 REF + VDA demographic data 
 
 
 rm(list=ls()) # clear workspace
@@ -35,10 +35,9 @@ load("data/demref2020.RData")
 
 
 
-
 ##### II. Descriptive analysis of 2020 demo data set for REF and VDA ##### 
 
-
+## data by disaggregation level
 
 t.typeOfDisaggregationBroad <- demref2020 %>% 
   group_by(typeOfDisaggregationBroad) %>% 
@@ -53,6 +52,8 @@ t.typeOfDisaggregation <- demref2020 %>%
             nAsylum = n_distinct(asylum)) %>% 
   mutate(freq.totalEndYear = totalEndYear/sum(totalEndYear),
          freq.asylum = nAsylum / sum(nAsylum))
+
+
 
 
 
@@ -118,27 +119,16 @@ p.totalEndYear.ori.asyreg  <- ggplot(data = t.totalEndYear.ori.asyreg %>% filter
 
 
 
-
-
-demref2020 <- demref2020 %>%
-  group_by(asylum_main_office_short, `asylum_Region Name`, `asylum_Sub-region Name`, asylum, asylum_iso3, asylum_country, 
-           origin, origin_iso3, origin_country) %>%
-  summarise_at(vars(female_0_4:unhcrAssistedEndYear), ~sum(., na.rm = T)) %>%
-  ungroup() %>%
-  mutate(agecov_1859 = rowSums(select(., female_0_4, female_5_11, female_12_17, female_18_59, female_60,
-                               male_0_4, male_5_11, male_12_17, male_18_59, male_60), na.rm = T ))
-  
-
-demasy2020 <- demasy2020 %>%
-  group_by(asylum_main_office_short, `asylum_Region Name`, `asylum_Sub-region Name`, asylum, asylum_iso3, asylum_country, 
-           origin, origin_iso3, origin_country) %>%
-  summarise_at(vars(female_0_4:unhcrAssistedEndYear), ~sum(., na.rm = T)) %>%
-  ungroup() %>%
-  mutate(agecov_1859 = rowSums(select(., female_0_4, female_5_11, female_12_17, female_18_59, female_60,
-                                      male_0_4, male_5_11, male_12_17, male_18_59, male_60), na.rm = T ))
-
-
-
+# 
+# 
+# demref2020 <- demref2020 %>%
+#   group_by(asylum_main_office_short, `asylum_Region Name`, `asylum_Sub-region Name`, asylum, asylum_iso3, asylum_country, 
+#            origin, origin_iso3, origin_country) %>%
+#   summarise_at(vars(female_0_4:unhcrAssistedEndYear), ~sum(., na.rm = T)) %>%
+#   ungroup() %>%
+#   mutate(agecov_1859 = rowSums(select(., female_0_4, female_5_11, female_12_17, female_18_59, female_60,
+#                                male_0_4, male_5_11, male_12_17, male_18_59, male_60), na.rm = T ))
+#   
 
 
 ### delete
