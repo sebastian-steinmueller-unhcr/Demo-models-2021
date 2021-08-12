@@ -42,9 +42,9 @@ source("descriptives.R")
 # Data set
 UNHCR compiles official statistics on stocks and flows of forcibly displaced and stateless persons twice a year, once for mid-year figures (Mid-Year Statistical Reporting, MYSR) and once for end-year figures (Annual Statistical Reporting, ASR). For these reporting exercises, country operations compile aggregate population figures from a range of sources and data producers such as governments, UNHCR's own refugee registration database proGres and sometimes non-governmental actors. The figures undergo a statistical quality control process at the country, regional and global level of the organisation and are disseminated on the publicly available refugee data finder (https://www.unhcr.org/refugee-statistics/) after undergoing a light statistical disclosure control process to suppress very small counts of persons that could identify individuals. 
 
-The end-year figures compiled with reporting date 31 December contain sex- and age breakdowns of the stocks of displaced and stateless people under UNHCR's mandate. Table \@ref(tab:demref2020)) displays the sex- and age-disaggregated data on the stock of refugees under UNHCR's mandate (including Venezuelans displaced abroad, excluding Palestine refugees under UNRWA's mandate). The data is available on sub-national level as indicated by the variables _location_ and _urbanRural_. Variable _statelessStatus_ displays whether the reported population is stateless ("STL" and "UDN") or not stateless ("NSL"). The variables [sex]_[agebracket] contain the counts of refugees as of 31 December 2020 in the individual sex and age brackets in the respective geographic/stateless combination. For example, _female_12_17_ contains the number of female refugees aged 12 to 17. Variable _totalEndYear_ is the total number of refugees over all sex/age categories. 
+The end-year figures compiled with reporting date 31 December contain sex- and age breakdowns of the stocks of displaced and stateless people under UNHCR's mandate. Table \@ref(tab:demref2020)) displays the sex- and age-disaggregated data on the stock of refugees under UNHCR's mandate (including Venezuelans displaced abroad, excluding Palestine refugees under UNRWA's mandate). The data is available by country of origin, country of asylum and within country of asylum on sub-national level as indicated by the variables _location_ and _urbanRural_. Variable _statelessStatus_ displays whether the reported population is stateless ("STL" and "UDN") or not stateless ("NSL"). The variables [sex]_[agebracket] contain the counts of refugees as of 31 December 2020 in the individual sex and age brackets in the respective geographic/stateless combination. For example, _female_12_17_ contains the number of female refugees aged 12 to 17. Variable _totalEndYear_ is the total number of refugees over all sex/age categories. 
  
-```{r demref2020, cols.min.print=32, rows.print=7, rownames.print = F, caption = "Demographic breakdown of UNHCR refugee population end-2020"}
+```{r demref2020, echo = F, cols.min.print=32, rows.print=7, rownames.print = F, caption = "Demographic breakdown of UNHCR refugee population end-2020"}
 demref2020 %>% 
   select(asylum_country, origin_country, location, urbanRural, statelessStatus, female_0_4:totalEndYear, typeOfDisaggregation, typeOfDisaggregationBroad)
 ``` 
@@ -54,21 +54,27 @@ Pre-defined sex-specific age brackets are 0-4, 5-11, 12-17, 18-24, 25-49, 50-59 
 
 # Distribution of missing data
 
-```{r  t-typeOfDisaggregation, rownames.print = F, caption = "Demographic breakdown of UNHCR refugee population end-2020"}
+```{r  t.typeOfDisaggregation, rownames.print = F, caption = "Demographic breakdown of UNHCR refugee population end-2020"}
 t.typeOfDisaggregation
 ``` 
 
-Table \@ref(tab:t-typeOfDisaggregation)) shows numbers of refugees and countries of asylum for which sex- and age-disaggregated data is available, including the respective proportions out of total refugees and countries of asylum. Age- and sex-disaggregated data is available for `r round(sum(t.typeOfDisaggregation[t.typeOfDisaggregation$typeOfDisaggregation %in% c("Sex/Age broad", "Sex/Age fine"),]$freq.totalEndYear)*100,1)` per cent of the global refugee population and data disaggregated only by sex for a further `r round(t.typeOfDisaggregation[t.typeOfDisaggregation$typeOfDisaggregation %in% c("Sex"),]$freq.totalEndYear*100,1)` per cent. 
+Table \@ref(fig:t.typeOfDisaggregation)) shows numbers of refugees and countries of asylum for which sex- and age-disaggregated data is available, including the respective proportions out of total refugees and countries of asylum. Age- and sex-disaggregated data is available for `r round(sum(t.typeOfDisaggregation[t.typeOfDisaggregation$typeOfDisaggregation %in% c("Sex/Age broad", "Sex/Age fine"),]$freq.totalEndYear)*100,0)` per cent of the global refugee population and data disaggregated only by sex for a further `r round(t.typeOfDisaggregation[t.typeOfDisaggregation$typeOfDisaggregation %in% c("Sex"),]$freq.totalEndYear*100,0)` per cent.  
+
+UNHCR has in the past resorted to reporting the sex/age breakdown in the available data as global and regional aggregates of the demographic distribution of refugees. Figure 
+
+```{r  p.obsDemographicsBroad, rownames.print = F, caption = "Demographic breakdown of UNHCR refugee population end-2020"}
+t.typeOfDisaggregation
+``` 
 
 
 ## By region of asylum
 
-```{r, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Demographic disaggregation coverage by region of asylum"}
-p.typeOfDissaggregationBroad.asyregion
+```{r p.typeOfDissaggregationBroad.asyregionhcr, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Demographic disaggregation coverage by region of asylum"}
+p.typeOfDissaggregationBroad.asyregionhcr
 
 ```
 
-
+Figure \@ref(fig:p.typeOfDissaggregationBroad.asyregionhcr)) shows for what proportion of the refugee population in each region sex- and sex/age-disaggregated data was available at the end of 2020. While demographic coverage is close to universal for refugees hosted in the Sub-Saharan Africa and the MENA regions, 
 
 
 
