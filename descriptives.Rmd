@@ -42,16 +42,20 @@ UNHCR compiles official statistics on stocks and flows of forcibly displaced and
 
 The end-year figures compiled with reporting date 31 December contain sex- and age breakdowns of the stocks of displaced and stateless people under UNHCR's mandate. Table \@ref(tab:demref2020)) displays the sex- and age-disaggregated data on the stock of refugees under UNHCR's mandate (including Venezuelans displaced abroad, excluding Palestine refugees under UNRWA's mandate). The data is available on sub-national level as indicated by the variables location and urbanRural. Variable statelessStatus displays whether the reported population is stateless (STL and UDN) or not stateless (NSL). The variables [sex]_[agebracket] contain the counts of refugees as of 31 December 2020 in the individual sex and age brackets in the respective geographic/stateless combination. For example, female_12_17 contains the number of female refugees aged 12 to 17. Variable totalEndYear is the total number of refugees over all sex/age categories.   
  
-```{r demref2020, cols.min.print=32, rows.print=7, rownames.print = F}
-knitr::kable(demref2020 %>% 
-  select(asylum_country, origin_country, location, urbanRural, statelessStatus, female_0_4:totalEndYear, typeOfDisaggregation, typeOfDisaggregationBroad),
-  caption = "Demographic breakdown of UNHCR refugee population end-2020") 
+```{r demref2020, cols.min.print=32, rows.print=7, rownames.print = F, caption = "Demographic breakdown of UNHCR refugee population end-2020"}
+demref2020 %>% 
+  select(asylum_country, origin_country, location, urbanRural, statelessStatus, female_0_4:totalEndYear, typeOfDisaggregation, typeOfDisaggregationBroad)
 ``` 
  
 
-## Descriptives of age distribution and missingness
+# Geographic distribution of missing data
 
+## By region of asylum
 
+```{r, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap='Demographic disaggregation coverage by region of asylum}
+p.typeOfDissaggregationBroad.asyregion
+
+```
 
 
 
@@ -61,6 +65,14 @@ Globally
 - % per age/sex cat. 
 - % age missing
 - % age and sex missing
+
+
+## By region of origin
+
+```{r, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap='Demographic disaggregation coverage by region of origin}
+p.typeOfDissaggregationBroad.oriregion
+
+```
 
 
 

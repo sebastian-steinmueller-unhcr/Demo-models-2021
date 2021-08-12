@@ -38,7 +38,7 @@ load("data/demref2020.RData")
 
 ##### II. Descriptive analysis of 2020 demo data set for REF and VDA ##### 
 
-## data by disaggregation level
+### data by disaggregation level
 
 t.typeOfDisaggregationBroad <- demref2020 %>% 
   group_by(typeOfDisaggregationBroad) %>% 
@@ -53,6 +53,158 @@ t.typeOfDisaggregation <- demref2020 %>%
             nAsylum = n_distinct(asylum)) %>% 
   mutate(freq.totalEndYear = totalEndYear/sum(totalEndYear),
          freq.asylum = nAsylum / sum(nAsylum))
+
+
+### missingness by country of asylum
+t.typeOfDisaggregation.asy <- demref2020 %>% 
+  group_by(`asylum_Sub-region Name`, asylum_country,  typeOfDisaggregation) %>% 
+  summarise(totalEndYear = sum(totalEndYear, na.rm = T),
+            nOrigin = n_distinct(origin_country)) %>% 
+  mutate(freq.totalEndYear = totalEndYear/sum(totalEndYear),
+         freq.origin = nOrigin / sum(nOrigin))
+
+
+t.asy.typeOfDissaggregation <- demref2020 %>% 
+  group_by(typeOfDisaggregationBroad,   asylum_country) %>% 
+  summarise(totalEndYear = sum(totalEndYear, na.rm = T),
+            nOrigin = n_distinct(origin_country)) %>% 
+  mutate(freq.totalEndYear = totalEndYear/sum(totalEndYear),
+         freq.origin = nOrigin / sum(nOrigin))
+
+
+t.asyregion.typeOfDissaggregation <- demref2020 %>% 
+  group_by(typeOfDisaggregationBroad,   `asylum_Region Name`) %>% 
+  summarise(totalEndYear = sum(totalEndYear, na.rm = T),
+            nOrigin = n_distinct(origin_country)) %>% 
+  mutate(freq.totalEndYear = totalEndYear/sum(totalEndYear),
+         freq.origin = nOrigin / sum(nOrigin))
+
+
+p.asyregion.typeOfDissaggregationBroad <- ggplot(data = t.asyregion.typeOfDissaggregation %>% 
+                                       filter(!is.na(`asylum_Region Name`)),
+                                     aes(x = `asylum_Region Name`, 
+                                         y = freq.totalEndYear*100,
+                                         fill = `asylum_Region Name`)) +
+  geom_bar( stat="identity") +
+  facet_wrap(~  `typeOfDisaggregationBroad`, ncol = 3, scales = "fixed")
+
+
+
+t.typeOfDissaggregation.asyregion <- demref2020 %>% 
+  group_by(`asylum_Region Name`, typeOfDisaggregationBroad) %>% 
+  summarise(totalEndYear = sum(totalEndYear, na.rm = T),
+            nOrigin = n_distinct(origin_country)) %>% 
+  mutate(freq.totalEndYear = totalEndYear/sum(totalEndYear),
+         freq.origin = nOrigin / sum(nOrigin))
+
+
+
+p.typeOfDissaggregationBroad.asyregion <- ggplot(data = t.typeOfDissaggregation.asyregion %>% 
+                                                   filter(!is.na(`asylum_Region Name`)),
+                                                 aes(x = `typeOfDisaggregationBroad`, 
+                                                     y = freq.totalEndYear*100,
+                                                     fill = `typeOfDisaggregationBroad`)) +
+  geom_bar( stat="identity") +
+  facet_wrap(~  `asylum_Region Name`, ncol = 5, scales = "fixed")
+
+
+
+
+### missingness by country of origin
+
+# by major world region
+
+t.typeOfDisaggregation.ori <- demref2020 %>% 
+  group_by(`origin_Sub-region Name`, origin_country,  typeOfDisaggregation) %>% 
+  summarise(totalEndYear = sum(totalEndYear, na.rm = T),
+            nAsylum = n_distinct(asylum_country)) %>% 
+  mutate(freq.totalEndYear = totalEndYear/sum(totalEndYear),
+         freq.asylum = nAsylum / sum(nAsylum))
+
+
+t.ori.typeOfDissaggregation <- demref2020 %>% 
+  group_by(typeOfDisaggregationBroad,   origin_country) %>% 
+  summarise(totalEndYear = sum(totalEndYear, na.rm = T),
+            nAsylum = n_distinct(asylum_country)) %>% 
+  mutate(freq.totalEndYear = totalEndYear/sum(totalEndYear),
+         freq.asylum = nAsylum / sum(nAsylum))
+
+
+t.oriregion.typeOfDissaggregation <- demref2020 %>% 
+  group_by(typeOfDisaggregationBroad,   `origin_Region Name`) %>% 
+  summarise(totalEndYear = sum(totalEndYear, na.rm = T),
+            nAsylum = n_distinct(asylum_country)) %>% 
+  mutate(freq.totalEndYear = totalEndYear/sum(totalEndYear),
+         freq.asylum = nAsylum / sum(nAsylum))
+
+
+p.oriregion.typeOfDissaggregationBroad <- ggplot(data = t.oriregion.typeOfDissaggregation %>% 
+                                                   filter(!is.na(`origin_Region Name`)),
+                                                 aes(x = `origin_Region Name`, 
+                                                     y = freq.totalEndYear*100,
+                                                     fill = `origin_Region Name`)) +
+  geom_bar( stat="identity") +
+  facet_wrap(~  `typeOfDisaggregationBroad`, ncol = 3, scales = "fixed")
+
+
+
+t.typeOfDissaggregation.oriregion <- demref2020 %>% 
+  group_by(`origin_Region Name`, typeOfDisaggregationBroad) %>% 
+  summarise(totalEndYear = sum(totalEndYear, na.rm = T),
+            nAsylum = n_distinct(asylum_country)) %>% 
+  mutate(freq.totalEndYear = totalEndYear/sum(totalEndYear),
+         freq.asylum = nAsylum / sum(nAsylum))
+
+
+
+p.typeOfDissaggregationBroad.oriregion <- ggplot(data = t.typeOfDissaggregation.oriregion %>% 
+                                                   filter(!is.na(`origin_Region Name`)),
+                                                 aes(x = `typeOfDisaggregationBroad`, 
+                                                     y = freq.totalEndYear*100,
+                                                     fill = `typeOfDisaggregationBroad`)) +
+  geom_bar( stat="identity") +
+  facet_wrap(~  `origin_Region Name`, ncol = 5, scales = "fixed")
+
+
+
+# by UNHCR region
+
+t.oriregionhcr.typeOfDissaggregation <- demref2020 %>% 
+  group_by(typeOfDisaggregationBroad,   `origin_hcr_region`) %>% 
+  summarise(totalEndYear = sum(totalEndYear, na.rm = T),
+            nAsylum = n_distinct(asylum_country)) %>% 
+  mutate(freq.totalEndYear = totalEndYear/sum(totalEndYear),
+         freq.asylum = nAsylum / sum(nAsylum))
+
+
+p.oriregionhcr.typeOfDissaggregationBroad <- ggplot(data = t.oriregionhcr.typeOfDissaggregation %>% 
+                                                   filter(!is.na(`origin_hcr_region`)),
+                                                 aes(x = `origin_hcr_region`, 
+                                                     y = freq.totalEndYear*100,
+                                                     fill = `origin_hcr_region`)) +
+  geom_bar( stat="identity") +
+  facet_wrap(~  `typeOfDisaggregationBroad`, ncol = 3, scales = "fixed")
+
+
+
+t.typeOfDissaggregation.oriregionhcr <- demref2020 %>% 
+  group_by(`origin_hcr_region`, typeOfDisaggregationBroad) %>% 
+  summarise(totalEndYear = sum(totalEndYear, na.rm = T),
+            nAsylum = n_distinct(asylum_country)) %>% 
+  mutate(freq.totalEndYear = totalEndYear/sum(totalEndYear),
+         freq.asylum = nAsylum / sum(nAsylum))
+
+
+
+p.typeOfDissaggregationBroad.oriregionhcr <- ggplot(data = t.typeOfDissaggregation.oriregionhcr %>% 
+                                                   filter(!is.na(`origin_hcr_region`)),
+                                                 aes(x = `typeOfDisaggregationBroad`, 
+                                                     y = freq.totalEndYear*100,
+                                                     fill = `typeOfDisaggregationBroad`)) +
+  geom_bar( stat="identity") +
+  facet_wrap(~  `origin_hcr_region`, ncol = 7, scales = "fixed")
+
+
 
 
 
