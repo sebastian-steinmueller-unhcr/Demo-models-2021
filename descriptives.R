@@ -116,7 +116,21 @@ p.typeOfDissaggregationBroad.asyregion <- ggplot(data = t.typeOfDissaggregation.
   facet_wrap(~  `asylum_Region Name`, ncol = 5, scales = "fixed")
 
 
+t.typeOfDissaggregation.asyregionhcr <- demref2020 %>% 
+  group_by(asylum_hcr_region, typeOfDisaggregationBroad) %>% 
+  summarise(totalEndYear = sum(totalEndYear, na.rm = T),
+            nOrigin = n_distinct(origin_country)) %>% 
+  mutate(freq.totalEndYear = totalEndYear/sum(totalEndYear),
+         freq.origin = nOrigin / sum(nOrigin))
 
+
+p.typeOfDissaggregationBroad.asyregionhcr <- ggplot(data = t.typeOfDissaggregation.asyregionhcr %>% 
+                                                   filter(!is.na(asylum_hcr_region)),
+                                                 aes(x = `typeOfDisaggregationBroad`, 
+                                                     y = freq.totalEndYear*100,
+                                                     fill = `typeOfDisaggregationBroad`)) +
+  geom_bar( stat="identity") +
+  facet_wrap(~  `asylum_hcr_region`, ncol = 5, scales = "fixed")
 
 ### missingness by country of origin
 
@@ -223,7 +237,60 @@ p.typeOfDissaggregationBroad.oriregionhcr <- ggplot(data = t.typeOfDissaggregati
 
 
 
+### demographics with available data only ### 
 
+t.obsDemographicsBroad.age <- demref2020 %>% 
+  filter(typeOfDisaggregationBroad == "Sex/Age") %>%
+  summarise_at(vars(female_0_4, female_5_11, female_12_17, female_18_59, female_60, 
+                    male_0_4, male_5_11, male_12_17, male_18_59, male_60), ~sum(., na.rm = T)) %>% 
+  pivot_longer(cols = female_0_4:male_60, names_to = "agesexcat", values_to = "population") %>% 
+  separate(agesexcat, into = c("sex", "age"), sep = "_") %>% 
+  mutate(age = case_when(
+    age == 0 ~ "0-4",
+    age == 5 ~ "5-11",
+    age == 12 ~ "12-17",
+    age == 18~ "18-59",
+    age == 60 ~ "60+"
+  )) %>% 
+  mutate(age = factor(age, levels = c("0-4", "5-11", "12-17","18-59", "60+")),
+         sex = str_to_title(sex)) %>%
+  group_by(age) %>%
+  mutate(populationprop = population/sum(population)*100)
+
+
+p.obsDemographicsBroad <- ggplot(data = t.obsDemographicsBroad.age,
+                                 aes(x = age, 
+                                     y = populationprop,
+                                     fill = sex)) +
+  geom_bar( stat="identity", position = "stack")
+
+
+t.obsDemographicsBroad.age.asyregionhcr <- demref2020 %>% 
+  filter(typeOfDisaggregationBroad == "Sex/Age") %>%
+  group_by(asylum_hcr_region) %>%
+  summarise_at(vars(female_0_4, female_5_11, female_12_17, female_18_59, female_60, 
+                    male_0_4, male_5_11, male_12_17, male_18_59, male_60), ~sum(., na.rm = T)) %>% 
+  pivot_longer(cols = female_0_4:male_60, names_to = "agesexcat", values_to = "population") %>% 
+  separate(agesexcat, into = c("sex", "age"), sep = "_") %>% 
+  mutate(age = case_when(
+    age == 0 ~ "0-4",
+    age == 5 ~ "5-11",
+    age == 12 ~ "12-17",
+    age == 18~ "18-59",
+    age == 60 ~ "60+"
+  )) %>% 
+  mutate(age = factor(age, levels = c("0-4", "5-11", "12-17","18-59", "60+")),
+         sex = str_to_title(sex)) %>%
+  group_by(asylum_hcr_region, age) %>%
+  mutate(populationprop = population/sum(population)*100)
+
+
+p.obsDemographicsBroad.asyregionhcr <- ggplot(data = t.obsDemographicsBroad.age.asyregionhcr,
+                                 aes(x = age, 
+                                     y = populationprop,
+                                     fill = sex)) +
+  geom_bar( stat="identity", position = "stack") +
+  facet_wrap(~ `asylum_hcr_region`, ncol = 5, scales = "fixed")
 
 
 # show type of disaggregation by origin (show for safe pathway countries in figure)
