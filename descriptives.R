@@ -27,6 +27,14 @@ library(bookdown)
 ### options
 options(scipen = 999)
 
+## colours (https://intranet.unhcr.org/content/dam/unhcr/intranet/staff%20support/strategic/documents/english/brand-book/UNHCR-Brand%20Book.pdf)
+unhcrPaletteBlue <- c("#0072BC", "#338EC9", "#66AAD7", "#99C7E4", "#CCE3F2")
+unhcrPaletteBlack <- c("#000000", "#333333", "#666666", "#999999", "#CCCCCC")
+unhcrPaletteYellow <- c("#FAEB00", "#FBEF33", "#FCF366", "#FDF799", "#FEFBCC")
+unhcrPaletteWhite <- c("#FFFFFF")
+unhcrPaletteRed <- c("#E73451")
+unhcrPaletteGreen <- c("#00AB92")
+
 ### Other R files
 source("unhcr_style.R")
 source("functions_demomodels.R")
@@ -185,6 +193,14 @@ p.oriregionhcr.typeOfDissaggregationBroad <- ggplot(data = t.oriregionhcr.typeOf
   geom_bar( stat="identity") +
   facet_wrap(~  `typeOfDisaggregationBroad`, ncol = 3, scales = "fixed")
 
+
+p.oriregionhcr.typeOfDissaggregationBroad2 <- ggplot(data = t.oriregionhcr.typeOfDissaggregation %>% 
+                                                      filter(!is.na(`origin_hcr_region`), typeOfDisaggregationBroad!="Sex"),
+                                                    aes(x = `origin_hcr_region`, 
+                                                        y = freq.totalEndYear*100,
+                                                        fill = `origin_hcr_region`)) +
+  geom_bar( stat="identity") +
+  facet_wrap(~  `typeOfDisaggregationBroad`, ncol = 3, scales = "fixed")
 
 
 t.typeOfDissaggregation.oriregionhcr <- demref2020 %>% 
