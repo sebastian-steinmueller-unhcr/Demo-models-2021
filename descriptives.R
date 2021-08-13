@@ -239,6 +239,8 @@ p.typeOfDissaggregationBroad.oriregionhcr <- ggplot(data = t.typeOfDissaggregati
 
 ### demographics with available data only ### 
 
+## sex within age
+
 t.obsDemographicsBroad.age <- demref2020 %>% 
   filter(typeOfDisaggregationBroad == "Sex/Age") %>%
   summarise_at(vars(female_0_4, female_5_11, female_12_17, female_18_59, female_60, 
@@ -258,11 +260,13 @@ t.obsDemographicsBroad.age <- demref2020 %>%
   mutate(populationprop = population/sum(population)*100)
 
 
-p.obsDemographicsBroad <- ggplot(data = t.obsDemographicsBroad.age,
+p.obsDemographicsBroad.age <- ggplot(data = t.obsDemographicsBroad.age,
                                  aes(x = age, 
                                      y = populationprop,
                                      fill = sex)) +
-  geom_bar( stat="identity", position = "stack")
+  geom_bar( stat="identity", position = "stack") +
+  geom_hline(yintercept = 50, linetype="dashed")
+
 
 
 t.obsDemographicsBroad.age.asyregionhcr <- demref2020 %>% 
@@ -291,6 +295,60 @@ p.obsDemographicsBroad.asyregionhcr <- ggplot(data = t.obsDemographicsBroad.age.
                                      fill = sex)) +
   geom_bar( stat="identity", position = "stack") +
   facet_wrap(~ `asylum_hcr_region`, ncol = 5, scales = "fixed")
+
+
+## age sex 
+
+t.obsDemographicsBroad.short <- demref2020 %>% 
+  filter(typeOfDisaggregationBroad == "Sex/Age") %>%
+  summarise_at(vars(female_children, female_adults, male_children, male_adults), ~sum(., na.rm = T)) %>% 
+  pivot_longer(cols = female_children:male_adults, names_to = "agesexcat", values_to = "population") %>% 
+  separate(agesexcat, into = c("sex", "age"), sep = "_") %>% 
+  # mutate(age = case_when(
+  #   age == 0 ~ "0-4",
+  #   age == 5 ~ "5-11",
+  #   age == 12 ~ "12-17",
+  #   age == 18~ "18-59",
+  #   age == 60 ~ "60+"
+  # )) %>% 
+  mutate(populationprop = population/sum(population)*100)  %>%
+  mutate(
+    populationprop = case_when(
+      sex == "male" ~ (populationprop),
+      sex == "female" ~ -1*(populationprop)
+    ))  %>%
+  mutate(age = factor(age, levels = c("children", "adults")),
+         sex = factor(sex, levels = c("female", "male"))
+  )
+
+
+p.obsDemographicsBroad.short <- ggplot(data = t.obsDemographicsBroad.short %>% mutate(
+                                              y_min = -30, 
+                                              y_max = 30
+                                              ), 
+                                        aes(x = age, y = populationprop, fill = sex)) + 
+  geom_bar(data = t.obsDemographicsBroad.short %>% filter(sex == "female"), stat = "identity") + 
+  geom_bar(data = t.obsDemographicsBroad.short %>% filter(sex == "male"), stat = "identity") + 
+  scale_y_continuous(breaks = seq(-30, 30, 10), name="Age/sex composition of refugees with\navailabe data end-2020",
+                     labels = paste0(c(seq(from = 30, to = 0, by=-10), seq(from = 10, to = 30, by=10) ), "%")) +
+  theme_minimal() +
+  theme(axis.title.x=element_text(size=20, margin = margin(t = 15, r = 0, b = 0, l = 0)),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank()) +
+  coord_flip() + 
+  scale_fill_manual(values=c("#006AB4", "#00AB92")) + 
+  theme(legend.title = element_blank(), legend.position="bottom") +
+  # theme(text = element_text(size=30),
+  #       legend.text=element_text(size=30),
+  #       axis.text.y = element_text(size=20, angle = 0),#
+  #       axis.title.y = element_blank(),
+  #       axis.text.x = element_text(size=20, angle = 0))  +
+  # theme(panel.grid.minor.y = element_blank(),
+  #       panel.grid.major.y = element_blank(),
+  #       panel.grid.minor.x = element_blank()) +
+  theme(legend.position = "bottom") +
+  theme(plot.margin = unit(c(0.2,2,2,1), "cm"))
+
 
 
 # show type of disaggregation by origin (show for safe pathway countries in figure)

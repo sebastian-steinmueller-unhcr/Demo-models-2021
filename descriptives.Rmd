@@ -40,7 +40,7 @@ source("descriptives.R")
 
 
 # Data set
-UNHCR compiles official statistics on stocks and flows of forcibly displaced and stateless persons twice a year, once for mid-year figures (Mid-Year Statistical Reporting, MYSR) and once for end-year figures (Annual Statistical Reporting, ASR). For these reporting exercises, country operations compile aggregate population figures from a range of sources and data producers such as governments, UNHCR's own refugee registration database proGres and sometimes non-governmental actors. The figures undergo a statistical quality control process at the country, regional and global level of the organisation and are disseminated on the publicly available refugee data finder (https://www.unhcr.org/refugee-statistics/) after undergoing a light statistical disclosure control process to suppress very small counts of persons that could identify individuals. 
+UNHCR compiles official statistics on stocks and flows of forcibly displaced and stateless persons twice a year, once for mid-year figures (Mid-Year Statistical Reporting, MYSR) and once for end-year figures (Annual Statistical Reporting, ASR). For these reporting exercises, country operations compile aggregate population figures from a range of sources and data producers such as governments, UNHCR's own refugee registration database proGres and sometimes non-governmental actors. The figures undergo a statistical quality control process at the country, regional and global level of the organisation and are disseminated on the publicly available refugee data finder (https://www.unhcr.org/refugee-statistics/) after applying statistical disclosure control to suppress very small counts of persons that could identify individuals. 
 
 The end-year figures compiled with reporting date 31 December contain sex- and age breakdowns of the stocks of displaced and stateless people under UNHCR's mandate. Table \@ref(tab:demref2020)) displays the sex- and age-disaggregated data on the stock of refugees under UNHCR's mandate (including Venezuelans displaced abroad, excluding Palestine refugees under UNRWA's mandate). The data is available by country of origin, country of asylum and within country of asylum on sub-national level as indicated by the variables _location_ and _urbanRural_. Variable _statelessStatus_ displays whether the reported population is stateless ("STL" and "UDN") or not stateless ("NSL"). The variables [sex]_[agebracket] contain the counts of refugees as of 31 December 2020 in the individual sex and age brackets in the respective geographic/stateless combination. For example, _female_12_17_ contains the number of female refugees aged 12 to 17. Variable _totalEndYear_ is the total number of refugees over all sex/age categories. 
  
@@ -49,23 +49,31 @@ demref2020 %>%
   select(asylum_country, origin_country, location, urbanRural, statelessStatus, female_0_4:totalEndYear, typeOfDisaggregation, typeOfDisaggregationBroad)
 ``` 
  
-Pre-defined sex-specific age brackets are 0-4, 5-11, 12-17, 18-24, 25-49, 50-59 and 60 and older. For some population groups, data is only available for the overall 18-59 age group instead of for the finer brackets in this age range. For others, only sex-disaggregated data without age information is available, and finally there are population groups for which only the total end-year count without any demographic information is available. These different levels of disaggregated data availability is recorded in variable _typeOfDisaggregation_ in the dataset: "Sex/Age fine" for the most granular age brackets, "Sex/Age broad" for populations reported with the 18-59 age bracket, "Sex" where only counts of female and male refugees are available without age information and "None" for populations without any available demographic information.
+Pre-defined sex-specific age brackets are 0-4, 5-11, 12-17, 18-24, 25-49, 50-59 and 60 years and older. For some population groups, data is only available for the overall 18-59 age group instead of for the finer brackets in this age range. For others, only sex-disaggregated data without age information is available, and finally there are population groups for which only the total end-year count without any demographic information is available. These different levels of disaggregated data availability is recorded in variable _typeOfDisaggregation_ in the dataset: "Sex/Age fine" for the most granular age brackets, "Sex/Age broad" for populations reported with the 18-59 age bracket, "Sex" where only counts of female and male refugees are available without age information and "None" for populations without any available demographic information.
 
 
-# Distribution of missing data
+# Distribution of missing and observed demographic data
 
 ```{r  t.typeOfDisaggregation, rownames.print = F, caption = "Demographic breakdown of UNHCR refugee population end-2020"}
 t.typeOfDisaggregation
 ``` 
 
-Table \@ref(fig:t.typeOfDisaggregation)) shows numbers of refugees and countries of asylum for which sex- and age-disaggregated data is available, including the respective proportions out of total refugees and countries of asylum. Age- and sex-disaggregated data is available for `r round(sum(t.typeOfDisaggregation[t.typeOfDisaggregation$typeOfDisaggregation %in% c("Sex/Age broad", "Sex/Age fine"),]$freq.totalEndYear)*100,0)` per cent of the global refugee population and data disaggregated only by sex for a further `r round(t.typeOfDisaggregation[t.typeOfDisaggregation$typeOfDisaggregation %in% c("Sex"),]$freq.totalEndYear*100,0)` per cent.  
+Table \@ref(fig:t.typeOfDisaggregation)) shows the availability of sex/age-disaggregated data by the global number of refugees and countries of asylum. Age- and sex-disaggregated data is available for `r round(sum(t.typeOfDisaggregation[t.typeOfDisaggregation$typeOfDisaggregation %in% c("Sex/Age broad", "Sex/Age fine"),]$freq.totalEndYear)*100,0)` per cent of the global refugee population and data disaggregated only by sex for a further `r round(t.typeOfDisaggregation[t.typeOfDisaggregation$typeOfDisaggregation %in% c("Sex"),]$freq.totalEndYear*100,0)` per cent.  
 
-UNHCR has in the past resorted to reporting the sex/age breakdown in the available data as global and regional aggregates of the demographic distribution of refugees. Figure 
+UNHCR has in the past reported the sex/age breakdown in the available data as global and regional aggregates of the demographic distribution of all refugees. Figure \@ref(fig:p.obsDemographicsBroad.short)) shows the proportion of female and male children and adults in the global refugee population with available demographic data, with `r round(sum(abs(t.obsDemographicsBroad.short[t.obsDemographicsBroad.short$age %in% c("children"),]$populationprop)),0)` per cent children under the age of 18 and `r round(sum(abs(t.obsDemographicsBroad.short[t.obsDemographicsBroad.short$sex %in% c("female"),]$populationprop)),0)` per cent women and girls among the population.
 
-```{r  p.obsDemographicsBroad, rownames.print = F, caption = "Demographic breakdown of UNHCR refugee population end-2020"}
-t.typeOfDisaggregation
+```{r  p.obsDemographicsBroad.short, fig.height = 5, fig.width =5, fig.align='center', echo=F, fig.cap="Sex/age distribution of refugees with available data end-2020"}
+ p.obsDemographicsBroad.short
 ``` 
 
+In  figure \@ref(fig:p.obsDemographicsBroad.age)), we see the split between female and male refugees in each age bracket with available data, with a slight surplus of boys and men in all age groups up to 59 years and slightly more women than men among refugees aged 60 and older. 
+
+```{r  p.obsDemographicsBroad.age, fig.height = 4, fig.width = 6, fig.align='center', echo=F, fig.cap="Sex distribution within age brackets of refugees with available data end-2020"}
+ p.obsDemographicsBroad.age
+``` 
+
+
+By reporting the observed demographic distribution as the sex/age structure of the entire refugee population including the part without available data, we are assuming that the `r round(sum(t.typeOfDisaggregation[t.typeOfDisaggregation$typeOfDisaggregation %in% c("Sex", "None"),]$freq.totalEndYear)*100,0)` per cent for whom no age information was available at the end of 2020 have the same distribution as the ones with available data. It is difficult to check this very strong assumption of ignorability of the missing data without further information on the sex/age distribution in the missing part of the data. We can however compare the distribution of other, fully available variables between refugees with and without demographic information. If such variables can be assumed to be correlated with the sex/age distribution at least to some extent, this can give us an indication whether the ignorability assumption is likely to be justified or not. In particular, we can look at the distribution of data availability by country and region of asylum, and we can furthermore compare the distribution of origins of refugees in the observed and the unobserved part of the population. If missingness of demographic data was entirely random and thus ignorable, we would expect the geographic origins of refugees to be similar in the observed and the unobserved part of the demographic data, that is, we would see a similar distribution of origin countries. 
 
 ## By region of asylum
 
