@@ -6,12 +6,15 @@ date: 'Version: `r Sys.Date()`'
 output:
   html_document:
     df_print: paged
-  pdf_document: default
-  word_document: default
-  github_document:
-    df_print: paged
+    pdf_document: default
+    word_document: default
     code_folding: hide
 ---
+
+<style>
+body {
+text-align: justify}
+</style>
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
@@ -26,20 +29,18 @@ source("descriptives.R")
 ```
 
 
-# Outline of descriptive analysis
-- Describe UNHCR official population statistics content and compilation
-- Show and explore structure of data sets: especially asylum - origin - location. 
-- Show origin and asylum country structure in missing and non-missing demographic data
-- Explain choice of age brackets (18-59 or finer?): show population and country coverage
-
-
-
 # Introduction
 
+# Descriptive analysis
+- Describe UNHCR official population statistics content and compilation
+- Show and explore structure of data sets: especially asylum - origin - location
+- Show origin and asylum country structure in missing and non-missing demographic data
+- Explore differences in demographic structure for origin and asylum countries with high proportion of available data
 
 
 
-# Data set
+
+## Data set
 UNHCR compiles official statistics on stocks and flows of forcibly displaced and stateless persons twice a year, once for mid-year figures (Mid-Year Statistical Reporting, MYSR) and once for end-year figures (Annual Statistical Reporting, ASR). For these reporting exercises, country operations compile aggregate population figures from a range of sources and data producers such as governments, UNHCR's own refugee registration database proGres and sometimes non-governmental actors. The figures undergo a statistical quality control process at the country, regional and global level of the organisation and are disseminated on the publicly available refugee data finder (https://www.unhcr.org/refugee-statistics/) after applying statistical disclosure control to suppress very small counts of persons that could identify individuals. 
 
 The end-year figures compiled with reporting date 31 December contain sex- and age breakdowns of the stocks of displaced and stateless people under UNHCR's mandate. Table \@ref(tab:demref2020)) displays the sex- and age-disaggregated data on the stock of refugees under UNHCR's mandate (including Venezuelans displaced abroad, excluding Palestine refugees under UNRWA's mandate). The data is available by country of origin, country of asylum and within country of asylum on sub-national level as indicated by the variables _location_ and _urbanRural_. Variable _statelessStatus_ displays whether the reported population is stateless ("STL" and "UDN") or not stateless ("NSL"). The variables [sex]_[agebracket] contain the counts of refugees as of 31 December 2020 in the individual sex and age brackets in the respective geographic/stateless combination. For example, _female_12_17_ contains the number of female refugees aged 12 to 17. Variable _totalEndYear_ is the total number of refugees over all sex/age categories. 
@@ -52,7 +53,7 @@ demref2020 %>%
 Pre-defined sex-specific age brackets are 0-4, 5-11, 12-17, 18-24, 25-49, 50-59 and 60 years and older. For some population groups, data is only available for the overall 18-59 age group instead of for the finer brackets in this age range. For others, only sex-disaggregated data without age information is available, and finally there are population groups for which only the total end-year count without any demographic information is available. These different levels of disaggregated data availability is recorded in variable _typeOfDisaggregation_ in the dataset: "Sex/Age fine" for the most granular age brackets, "Sex/Age broad" for populations reported with the 18-59 age bracket, "Sex" where only counts of female and male refugees are available without age information and "None" for populations without any available demographic information.
 
 
-# Distribution of missing and observed demographic data
+## Distribution of missing and observed demographic data
 
 ```{r  t.typeOfDisaggregation, rownames.print = F, caption = "Demographic breakdown of UNHCR refugee population end-2020"}
 t.typeOfDisaggregation
@@ -73,56 +74,45 @@ In  figure \@ref(fig:p.obsDemographicsBroad.age)), we see the split between fema
 ``` 
 
 
-By reporting the observed demographic distribution as the sex/age structure of the entire refugee population including the part without available data, we are assuming that the `r round(sum(t.typeOfDisaggregation[t.typeOfDisaggregation$typeOfDisaggregation %in% c("Sex", "None"),]$freq.totalEndYear)*100,0)` per cent for whom no age information was available at the end of 2020 have the same distribution as the ones with available data. It is difficult to check this very strong assumption of ignorability of the missing data without further information on the sex/age distribution in the missing part of the data. We can however compare the distribution of other, fully available variables between refugees with and without demographic information. If such variables can be assumed to be correlated with the sex/age distribution at least to some extent, this can give us an indication whether the ignorability assumption is likely to be justified or not. In particular, we can look at the distribution of data availability by country and region of asylum, and we can furthermore compare the distribution of origins of refugees in the observed and the unobserved part of the population. If missingness of demographic data was entirely random and thus ignorable, we would expect the geographic origins of refugees to be similar in the observed and the unobserved part of the demographic data, that is, we would see a similar distribution of origin countries. 
+By reporting the observed demographic distribution as the sex/age structure of the entire refugee population including the part without available data, we are assuming that the `r round(sum(t.typeOfDisaggregation[t.typeOfDisaggregation$typeOfDisaggregation %in% c("Sex", "None"),]$freq.totalEndYear)*100,0)` per cent for whom no age information was available at the end of 2020 have the same age distribution as the ones with available data. It is difficult to check this very strong assumption of ignorability of the missing data without further information on the sex/age distribution in the missing part of the data. We can however compare the distribution of other, fully available variables between refugees with and without demographic information. If such variables can be assumed to be correlated with the sex/age distribution at least to some extent, this can give us an indication whether the ignorability assumption is likely to be justified or not.   
 
-## By region of asylum
+In particular, we can look at the distribution of data availability by country and region of asylum, and we can furthermore compare the distribution of origins of refugees in the observed and the unobserved part of the population. If missingness of demographic data was entirely random and thus ignorable, we would expect the geographic origins of refugees to be similar in the observed and the unobserved part of the demographic data, that is, we would see a similar distribution of origin countries.  
+
+Statelessness and the urban/rural variable are other variables for which we could in principle check distributions among refugees with and without observed demographic data. Variable _urbanRural_ however is not measured reliably in all reporting countries of asylum, and _statelessStatus_ can be assumed to suffer from underreporting that might be correlated with missingness in demographic data, making it a less than ideal measure of ignorability. We will therefore focus on the distribution of countries and regions of asylum and origin, both of which are measured reliably and with little missing data. Country of asylum is available for the entire population due to the way UNHCR's official population statistics are reported by country offices, and country of origin is available except for a very low proportion of refugees.  
+
+Some questions we are particularly interested in answering through the following descriptive analysis:  
+
+1. Can we assume that the sex/age distribution in the population with missing data is the same as in the population with available data?  
+2. Is origin country a predictor of the demographic composition of refugee populations, even if they live in different countries of asylum?  
+3. Is country of asylum a predictor of the demographic composition of refugee populations, even if they come from different countries of origin?  
+4. Are refugee populations from the same country of origin similar to each other in neighbouring countries of asylum and in countries in the same region?  
+5. Does the demographic distribution of a population from the same origin vary significantly across locations within the same country of asylum?  
+
+Adressing these questions will help us decide whether the approach to date of assuming ignorability of missing demographic data is justified and if not, which modelling approaches can help us estimate the demographic distribution and variability of the missing data part.
+
+### By region of origin
+
+```{r p.oriregionhcr.typeOfDissaggregationBroad2, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Proportion of refugees in each origin region by demographic data availability, end-2020"}
+p.oriregionhcr.typeOfDissaggregationBroad2
+
+```
+
+Figure \@ref(fig:p.typeOfDissaggregationBroad.asyregionhcr)) shows the distribution of refugees by origin regions separately for the two subsets of the global refugee population without (left side) and with (right side) sex/age-disaggregated data (population with sex- but not age-disaggregated data omitted for clarity). The most common origin regions are Sub-Saharan Africa and the MENA region for refugees with available demographic information.Those without demographic data availability have most commonly fled from countries in the Americas and the Asia-Pacific region. This provides a first indication that refugees with available sex/age-disaggregated data are fundamentally different from those without such data, and that we cannot simply assume the same demographic distribution between these two groups. 
+
+
+### By region of asylum
 
 ```{r p.typeOfDissaggregationBroad.asyregionhcr, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Demographic disaggregation coverage by region of asylum"}
 p.typeOfDissaggregationBroad.asyregionhcr
 
 ```
 
-Figure \@ref(fig:p.typeOfDissaggregationBroad.asyregionhcr)) shows for what proportion of the refugee population in each region sex- and sex/age-disaggregated data was available at the end of 2020. While demographic coverage is close to universal for refugees hosted in the Sub-Saharan Africa and the MENA regions, 
+Figure \@ref(fig:p.typeOfDissaggregationBroad.asyregionhcr)) shows for what proportion of the refugee population living in each region sex- and sex/age-disaggregated data was available at the end of 2020. While demographic coverage is close to universal for refugees hosted in the Sub-Saharan Africa and the MENA regions, it is available for `r round(t.typeOfDissaggregationBroad.asyregionhcr[t.typeOfDissaggregationBroad.asyregionhcr$typeOfDisaggregationBroad %in% c("Sex/Age")&t.typeOfDissaggregationBroad.asyregionhcr$asylum_hcr_region %in% c("Europe"),]$freq.totalEndYear*100,0)` per cent of refugees in Europe, `r round(t.typeOfDissaggregationBroad.asyregionhcr[t.typeOfDissaggregationBroad.asyregionhcr$typeOfDisaggregationBroad %in% c("Sex/Age")&t.typeOfDissaggregationBroad.asyregionhcr$asylum_hcr_region %in% c("Asia and the Pacific"),]$freq.totalEndYear*100,0)` per cent in Asia and the Pacific and only for `r round(t.typeOfDissaggregationBroad.asyregionhcr[t.typeOfDissaggregationBroad.asyregionhcr$typeOfDisaggregationBroad %in% c("Sex/Age")&t.typeOfDissaggregationBroad.asyregionhcr$asylum_hcr_region %in% c("Americas"),]$freq.totalEndYear*100,0)` per cent in the Americas. This is to a large extent a result of the differing population data sources in these regions: While the individual demographic details of refugees in many countries in Africa and MENA are recorded in UNHCR's own case registration system proGres, population data in other regions often comes from government offices with varying degrees of availability of demographic data. 
 
 
-
-Globally
-- % per age/sex cat. 
-- % age missing
-- % age and sex missing
+## Demographic distribution from selected countries of origin
 
 
-## By region of origin
-
-```{r, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap='Demographic disaggregation coverage by region of origin'}
-p.typeOfDissaggregationBroad.oriregion
-
-```
+## Demographic distribution in selected countries of asylum
 
 
-
-By CoO
-- % per age/sex cat. 
-- % age missing
-- % age and sex missing
-
-```{r, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap='Demographic disaggregation coverage by origin country and asylum region'}
-p.typeOfDisaggregationBroad.ori.asyreg
-
-```
-
-
-
-```{r, fig.height = 7, fig.width = 15, echo=F, fig.cap='2020 end-year refugee/Venezuelan population by origin country and asylum region'}
-p.totalEndYear.ori.asyreg
-
-```
-
-By CoA
-- % per age/sex cat. 
-- % age missing
-- % age and sex missing
-
-
-Discuss types and reasons for missingness (NMAR) and outline modelling approach to overcome.
-Why is using available data so bad?
