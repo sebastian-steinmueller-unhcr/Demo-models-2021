@@ -347,7 +347,7 @@ p.obsDemographicsBroad.short <- ggplot(data = t.obsDemographicsBroad.short %>% m
         panel.grid.major.y = element_blank(),
         panel.grid.minor.x = element_blank()) +
   theme(legend.position = "bottom") +
-  theme(plot.margin = unit(c(0.2,2,2,1), "cm"))
+  theme(plot.margin = unit(c(0.2,2,0.2,2), "cm"))
 
 
 
