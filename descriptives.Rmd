@@ -1,6 +1,5 @@
 ---
-title: Modelling the sex-age distribution of the global refugee and asylum-seeker
-  population
+title: Modelling the demographic distribution of the global refugee population
 author: "Sebastian Steinmueller (UNHCR)"
 date: 'Version: `r Sys.Date()`'
 output:
