@@ -116,7 +116,7 @@ p.typeOfDissaggregationBroad.asyregion <- ggplot(data = t.typeOfDissaggregation.
   facet_wrap(~  `asylum_Region Name`, ncol = 5, scales = "fixed")
 
 
-t.typeOfDissaggregation.asyregionhcr <- demref2020 %>% 
+t.typeOfDissaggregationBroad.asyregionhcr <- demref2020 %>% 
   group_by(asylum_hcr_region, typeOfDisaggregationBroad) %>% 
   summarise(totalEndYear = sum(totalEndYear, na.rm = T),
             nOrigin = n_distinct(origin_country)) %>% 
@@ -124,7 +124,7 @@ t.typeOfDissaggregation.asyregionhcr <- demref2020 %>%
          freq.origin = nOrigin / sum(nOrigin))
 
 
-p.typeOfDissaggregationBroad.asyregionhcr <- ggplot(data = t.typeOfDissaggregation.asyregionhcr %>% 
+p.typeOfDissaggregationBroad.asyregionhcr <- ggplot(data = t.typeOfDissaggregationBroad.asyregionhcr %>% 
                                                    filter(!is.na(asylum_hcr_region)),
                                                  aes(x = `typeOfDisaggregationBroad`, 
                                                      y = freq.totalEndYear*100,
@@ -329,23 +329,23 @@ p.obsDemographicsBroad.short <- ggplot(data = t.obsDemographicsBroad.short %>% m
                                         aes(x = age, y = populationprop, fill = sex)) + 
   geom_bar(data = t.obsDemographicsBroad.short %>% filter(sex == "female"), stat = "identity") + 
   geom_bar(data = t.obsDemographicsBroad.short %>% filter(sex == "male"), stat = "identity") + 
-  scale_y_continuous(breaks = seq(-30, 30, 10), name="Age/sex composition of refugees with\navailabe data end-2020",
+  scale_y_continuous(breaks = seq(-30, 30, 10), 
                      labels = paste0(c(seq(from = 30, to = 0, by=-10), seq(from = 10, to = 30, by=10) ), "%")) +
   theme_minimal() +
-  theme(axis.title.x=element_text(size=20, margin = margin(t = 15, r = 0, b = 0, l = 0)),
+  theme(axis.title.x=element_text(size=10, margin = margin(t = 15, r = 0, b = 0, l = 0)),
         axis.text.y=element_blank(),
         axis.ticks.y=element_blank()) +
   coord_flip() + 
   scale_fill_manual(values=c("#006AB4", "#00AB92")) + 
   theme(legend.title = element_blank(), legend.position="bottom") +
-  # theme(text = element_text(size=30),
-  #       legend.text=element_text(size=30),
-  #       axis.text.y = element_text(size=20, angle = 0),#
-  #       axis.title.y = element_blank(),
-  #       axis.text.x = element_text(size=20, angle = 0))  +
-  # theme(panel.grid.minor.y = element_blank(),
-  #       panel.grid.major.y = element_blank(),
-  #       panel.grid.minor.x = element_blank()) +
+  theme(text = element_text(size=10),
+        legend.text=element_text(size=10),
+        axis.text.y = element_text(size=10, angle = 0),
+        axis.title.y = element_blank(),
+        axis.text.x = element_text(size=10, angle = 0))  +
+  theme(panel.grid.minor.y = element_blank(),
+        panel.grid.major.y = element_blank(),
+        panel.grid.minor.x = element_blank()) +
   theme(legend.position = "bottom") +
   theme(plot.margin = unit(c(0.2,2,2,1), "cm"))
 
