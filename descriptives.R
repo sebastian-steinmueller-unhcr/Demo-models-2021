@@ -23,6 +23,8 @@ library(cowplot)
 library(ggExtra)
 library(electoral)
 library(bookdown)
+library(knitr)
+library(kableExtra)
 
 ### options
 options(scipen = 999)
@@ -41,7 +43,7 @@ source("functions_demomodels.R")
 
 ### data
 load("data/demref2020.RData")
-
+load("data/wpp_age_group.RData")
 
 
 ##### II. Descriptive analysis of 2020 demo data set for REF and VDA ##### 
@@ -411,6 +413,85 @@ p.totalEndYear.ori.asyreg  <- ggplot(data = t.totalEndYear.ori.asyreg %>% filter
   coord_flip() +
   facet_wrap(~  `origin_country`, ncol = 4, scales = "free")
 
+fancy_scientific <- function(l) {
+  # turn in to character string in scientific notation
+  l <- format(l, scientific = TRUE)
+  # quote the part before the exponent to keep all the digits
+  l <- gsub("^(.*)e", "'\\1'e", l)
+  # turn the 'e+' into plotmath format
+  l <- gsub("e", "%*%10^", l)
+  # return this as an expression
+  parse(text=l)
+}
+
+t.typeOfDisaggregationBroad.ori.asyreghcr <- demref2020 %>% mutate(asylum_hcr_region = recode_factor(asylum_hcr_region, `Middle East and North Africa` = 'MENA', `Asia and the Pacific` = 'A&P')) %>%
+  group_by(`origin_Sub-region Name`, origin, origin_iso3, origin_country, asylum_hcr_region,  typeOfDisaggregationBroad) %>% 
+  summarise(totalEndYear = sum(totalEndYear, na.rm = T),
+            nAsylum = n_distinct(asylum)) %>% 
+  mutate(freq.totalEndYear = totalEndYear/sum(totalEndYear),
+         freq.asylum = nAsylum / sum(nAsylum))
+
+p.totalEndYear.ori.asyreghcr <- ggplot(data = t.typeOfDisaggregationBroad.ori.asyreghcr %>% 
+                                                   filter(origin %in% c("VEN", "MYA", "SYR", "AFG", "ERT", "SOM", "IRN", "IRQ"), 
+                                                          !is.na(asylum_hcr_region) ),
+                                                 aes(x = fct_reorder(asylum_hcr_region, desc(asylum_hcr_region)), 
+                                                     y = totalEndYear, 
+                                                     fill = typeOfDisaggregationBroad )) +
+  scale_y_continuous(n.breaks = 3, labels = function(x) format(x, scientific = TRUE))+
+  geom_bar( position = "stack", stat="identity") +
+  coord_flip() +
+  facet_wrap(~  `origin_country`, ncol = 4, scales = "free")+
+  labs(y = NULL, x= NULL, fill = NULL)+
+  theme(axis.text.y = element_text(angle = 90))
+
+t.typeOfDisaggregationBroad.asy.orireghcr <- demref2020 %>% mutate(origin_hcr_region = recode_factor(origin_hcr_region, `Middle East and North Africa` = 'MENA', `Asia and the Pacific` = 'A&P')) %>%
+  group_by(`asylum_Sub-region Name`, asylum, asylum_iso3, asylum_country, origin_hcr_region,  typeOfDisaggregationBroad) %>% 
+  summarise(totalEndYear = sum(totalEndYear, na.rm = T),
+            nOrigin = n_distinct(origin)) %>% 
+  mutate(freq.totalEndYear = totalEndYear/sum(totalEndYear),
+         freq.origin = nOrigin / sum(nOrigin))
+
+p.totalEndYear.asy.orireghcr <- ggplot(data = t.typeOfDisaggregationBroad.asy.orireghcr %>% 
+                                         filter(asylum %in% c("TUR","COL","PAK","UGA","SUD","GFR","LEB","BGD")) %>% # Top 8 asylum country
+                                         mutate(origin_hcr_region = ifelse(is.na(as.character(origin_hcr_region)),'NA',as.character(origin_hcr_region))),
+                                       aes(x = fct_reorder(origin_hcr_region, desc(origin_hcr_region)), 
+                                           y = totalEndYear, 
+                                           fill = typeOfDisaggregationBroad )) +
+  scale_y_continuous(n.breaks = 3, labels = function(x) format(x, scientific = TRUE))+
+  geom_bar( position = "stack", stat="identity") +
+  coord_flip() +
+  facet_wrap(~  `asylum_country`, ncol = 4, scales = "free")+
+  labs(y = NULL, x= NULL, fill = NULL)+
+  theme(axis.text.y = element_text(angle = 90))
+
+
+
+t.ageDistribution.asy <- demref2020 %>% filter(typeOfDisaggregationBroad == 'Sex/Age') %>% mutate_at(vars(14:40),~replace_na(.,0)) %>% group_by(asylum_iso3) %>%
+  summarise(total_0_4 = sum(male_0_4+female_0_4), total_5_11 = sum(male_5_11+female_5_11), total_12_17 = sum(male_12_17+female_12_17), total_18_59 = sum(male_18_59+female_18_59), total_60 = sum(male_60+female_60)) %>%
+  gather(key = 'age_group', value = 'population_asy',2:6) %>% group_by(asylum_iso3) %>% mutate(pct_asy = population_asy/sum(population_asy)) %>% select(-population_asy)
+
+t.ageDistribution.ori <- demref2020 %>% filter(typeOfDisaggregationBroad == 'Sex/Age') %>% mutate_at(vars(14:40),~replace_na(.,0)) %>% group_by(origin_iso3) %>%
+  summarise(total_0_4 = sum(male_0_4+female_0_4), total_5_11 = sum(male_5_11+female_5_11), total_12_17 = sum(male_12_17+female_12_17), total_18_59 = sum(male_18_59+female_18_59), total_60 = sum(male_60+female_60)) %>%
+  gather(key = 'age_group', value = 'population_ori',2:6) %>% group_by(origin_iso3) %>% mutate(pct_ori = population_ori/sum(population_ori)) %>% select(-population_ori)
+
+t.ageDistribution.pop <- wpp.age.group.pct %>% filter(year == 2020, area.id<900) %>% select(area, iso3, total_0_4 = pop0to4.pct, total_5_11 = pop5to11.pct, total_12_17 = pop12to17.pct, total_18plus = pop18plus.pct, total_60 = pop60plus.pct) %>%
+  mutate(total_18_59 = total_18plus-total_60) %>% select(-total_18plus) %>% mutate_at(vars(3:7),~./100) %>%
+  gather(key = 'age_group', value = 'population',3:7) %>% group_by(iso3) %>% mutate(pct_pop = population/sum(population)) %>% select(-population)
+
+t.ageDistribution <- inner_join(t.ageDistribution.pop, t.ageDistribution.ori, by = c('iso3' = 'origin_iso3', 'age_group')) %>% inner_join(t.ageDistribution.asy, by = c('iso3' = 'asylum_iso3','age_group')) %>% 
+  mutate(age_group = factor(age_group, levels = c('total_0_4', 'total_5_11', 'total_12_17','total_18_59','total_60'))) %>% gather(key = 'type', value = 'pct',4:6)
+
+p.ageDistribution <- ggplot(data = t.ageDistribution %>%
+                              filter(iso3 %in% c('SYR','VEN','AFG', 'TUR', 'COL','DEU')),
+                            aes(x = age_group,
+                                y = pct,
+                                color = type,
+                                group = type)) +
+  geom_line(linetype = "dashed")+
+  geom_point()+
+  facet_wrap(~  `area`, ncol = 3, scales = "free")+
+  labs(y = NULL, x= NULL, fill = NULL)+
+  theme(axis.text.x = element_text(angle = 45))
 
 
 # 

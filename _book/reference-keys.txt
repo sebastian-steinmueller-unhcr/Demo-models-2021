@@ -1,0 +1,8 @@
+introduction
+descriptive-analysis
+data-set
+distribution-of-missing-and-observed-demographic-data
+by-region-of-origin
+by-region-of-asylum
+demographic-distribution-from-selected-countries-of-origin
+demographic-distribution-in-selected-countries-of-asylum
