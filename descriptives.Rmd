@@ -106,6 +106,89 @@ p.typeOfDissaggregationBroad.asyregionhcr
 
 Figure \@ref(fig:ptypeOfDissaggregationBroadasyregionhcr)) shows for what proportion of the refugee population living in each region sex- and sex/age-disaggregated data was available at the end of 2020. While demographic coverage is close to universal for refugees hosted in the Sub-Saharan Africa and the MENA regions, it is available for `r round(t.typeOfDissaggregationBroad.asyregionhcr[t.typeOfDissaggregationBroad.asyregionhcr$typeOfDisaggregationBroad %in% c("Sex/Age")&t.typeOfDissaggregationBroad.asyregionhcr$asylum_hcr_region %in% c("Europe"),]$freq.totalEndYear*100,0)` per cent of refugees in Europe, `r round(t.typeOfDissaggregationBroad.asyregionhcr[t.typeOfDissaggregationBroad.asyregionhcr$typeOfDisaggregationBroad %in% c("Sex/Age")&t.typeOfDissaggregationBroad.asyregionhcr$asylum_hcr_region %in% c("Asia and the Pacific"),]$freq.totalEndYear*100,0)` per cent in Asia and the Pacific and only for `r round(t.typeOfDissaggregationBroad.asyregionhcr[t.typeOfDissaggregationBroad.asyregionhcr$typeOfDisaggregationBroad %in% c("Sex/Age")&t.typeOfDissaggregationBroad.asyregionhcr$asylum_hcr_region %in% c("Americas"),]$freq.totalEndYear*100,0)` per cent in the Americas. This is to a large extent a result of the differing population data sources in these regions: While the individual demographic details of refugees in many countries in Africa and MENA are recorded in UNHCR's own case registration system proGres, population data in other regions often comes from government offices with varying degrees of availability of demographic data. 
 
+## Chord diagram for refugee flow within unhcr subregion, transparency related to the data coverage  
+```{r pchorddiagram, message=F, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Chord diagram"}
+library(circlize)
+
+findcolor <- function(i) {
+  func <-colorRampPalette(c("#97e6f7", "#0000ff"))
+  color <- func(100)[i]
+  return(color)}
+
+orig.dest.region <- demref2020 %>% mutate(origin_hcr_subregion = ifelse(is.na(as.character(origin_hcr_subregion)),'NA',as.character(origin_hcr_subregion))) %>%
+  group_by(orig.region = origin_hcr_subregion,dest.region = asylum_hcr_subregion) %>%
+  summarize(pop.mig = sum(totalEndYear)/1000,coverage = round(100*sum(totalEndYear[typeOfDisaggregationBroad == 'Sex/Age'], na.rm = T)/sum(totalEndYear, na.rm = T),1)) %>%
+  arrange(desc(pop.mig)) %>% ungroup() %>% select(-coverage)
+orig.dest.color <- demref2020 %>% mutate(origin_hcr_subregion = ifelse(is.na(as.character(origin_hcr_subregion)),'NA',as.character(origin_hcr_subregion))) %>%
+  group_by(orig.region = origin_hcr_subregion,dest.region = asylum_hcr_subregion) %>%
+  summarize(pop.mig = sum(totalEndYear)/1000,coverage = findcolor(round(100*sum(totalEndYear[typeOfDisaggregationBroad == 'Sex/Age'], na.rm = T)/sum(totalEndYear, na.rm = T),1))) %>%
+  arrange(desc(pop.mig)) %>% ungroup() %>% pull(coverage)
+
+circos.clear()
+circos.par(start.degree = 90, canvas.ylim = c(-1.1,1.1), gap.degree = 4, track.margin = c(-0.1, 0.1), points.overflow.warning = FALSE)
+par(mar = rep(1, 4))
+
+# color palette
+# colfunc <- colorRampPalette(c('#0083CF', "white"))
+# 
+# mycolor <- colfunc(length(concerned_ctries)+6)
+#mycolor <- mycolor[sample(1:(length(concerned_ctries)+6))]
+
+# Base plot
+chordDiagram(
+  x = orig.dest.region , 
+  grid.col = '#0000ff',
+  col = orig.dest.color,
+  directional = 1,
+  direction.type = c("arrows", "diffHeight"), 
+  diffHeight  = -0.04,
+  annotationTrack = "grid", 
+  annotationTrackHeight = c(0.05, 0.1),
+  link.arr.type = "big.arrow", 
+  link.sort = TRUE, 
+  link.largest.ontop = TRUE)
+
+circos.trackPlotRegion(
+  track.index = 1, 
+  bg.border = NA, 
+  panel.fun = function(x, y) {
+    
+    xlim = get.cell.meta.data("xlim")
+    sector.index = get.cell.meta.data("sector.index")
+    
+    # Add names to the sector. 
+    circos.text(
+      x = mean(xlim), 
+      y = 4, 
+      labels = sector.index, 
+      facing = "downward",
+      niceFacing = T,
+      cex = 0.7
+    )
+    
+    # Add graduation on axis
+    circos.axis(
+      h = "top", 
+      major.at = NULL,
+      minor.ticks = 1, 
+      major.tick.percentage = 0.5,
+      labels.niceFacing = TRUE,
+      labels.cex = 0.5)
+  }
+)
+``` 
+
+## Data coverage histogram  
+
+```{r pcoverageDistributionasy, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Data coverage histogram by country of asylum"}
+p.coverageDistribution.asy
+``` 
+
+```{r pcoverageDistributionori, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Data coverage histogram by country of origin"}
+p.coverageDistribution.ori
+```
+  
+The two figures above have shown drastic difference of distribution of data coverage between country of asylum and country of origin. When counted by country of asylum, the coverage is polarized, that is, for a single country of asylum, either the Sex/Age coverage is 0 or 100, while when counted by country of origin, the coverage numbers spread over 0 to 100 and concentrate on 0 side
 
 ## Demographic distribution from selected countries of origin
 ```{r ptotalEndYearoriasyreghcr, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Demographic disaggregation coverage from selected countries of origin"}

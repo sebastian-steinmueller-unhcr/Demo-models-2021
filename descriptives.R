@@ -493,6 +493,146 @@ p.ageDistribution <- ggplot(data = t.ageDistribution %>%
   labs(y = NULL, x= NULL, fill = NULL)+
   theme(axis.text.x = element_text(angle = 45))
 
+### the distribution of data coverage, origin and destination
+
+t.coverageDistribution.asy <- demref2020 %>% group_by(asylum_iso3,asylum_country) %>%
+  summarise(coverage = round(100*sum(totalEndYear[typeOfDisaggregationBroad == 'Sex/Age'], na.rm = T)/sum(totalEndYear, na.rm = T),1), ref.pop = sum(totalEndYear, na.rm = T))
+
+p.coverageDistribution.asy <- ggplot(data = t.coverageDistribution.asy,
+                                     aes(x = coverage)) +
+  geom_histogram(binwidth = 1)
+
+t.coverageDistribution.ori <- demref2020 %>% group_by(origin_iso3,origin_country) %>% 
+  summarise(coverage = round(100*sum(totalEndYear[typeOfDisaggregationBroad == 'Sex/Age'], na.rm = T)/sum(totalEndYear, na.rm = T),1), ref.pop = sum(totalEndYear, na.rm = T))
+
+p.coverageDistribution.ori <- ggplot(data = t.coverageDistribution.ori,
+                                     aes(x = coverage)) +
+  geom_histogram(binwidth = 1)
+
+### compare the origin between 0 coverage and 100 coverage asylum country
+t.compareOriAsylumCountry <- demref2020 %>% mutate(origin_hcr_region = recode_factor(origin_hcr_region, `Middle East and North Africa` = 'MENA', `Asia and the Pacific` = 'A&P')) %>%
+  filter(asylum_iso3 %in% t.coverageDistribution.asy$asylum_iso3[t.coverageDistribution.asy$coverage == 100]) %>%
+  group_by(origin_hcr_region,typeOfDisaggregationBroad) %>% 
+  summarise(totalEndYear = sum(totalEndYear, na.rm = T),
+            nOrigin = n_distinct(origin)) %>% 
+  mutate(type = '100% coverage') %>% bind_rows(
+    demref2020 %>% mutate(origin_hcr_region = recode_factor(origin_hcr_region, `Middle East and North Africa` = 'MENA', `Asia and the Pacific` = 'A&P')) %>%
+      filter(asylum_iso3 %in% t.coverageDistribution.asy$asylum_iso3[t.coverageDistribution.asy$coverage == 0]) %>%
+      group_by(origin_hcr_region,typeOfDisaggregationBroad) %>% 
+      summarise(totalEndYear = sum(totalEndYear, na.rm = T),
+                nOrigin = n_distinct(origin)) %>% 
+      mutate(type = '0% coverage')
+  )
+              
+p.compareOriAsylumCountry <- ggplot(data = t.compareOriAsylumCountry %>%  # Top 8 asylum country
+                                         mutate(origin_hcr_region = ifelse(is.na(as.character(origin_hcr_region)),'NA',as.character(origin_hcr_region))),
+                                       aes(x = fct_reorder(origin_hcr_region, desc(origin_hcr_region)), 
+                                           y = totalEndYear, 
+                                           fill = typeOfDisaggregationBroad )) +
+  scale_y_continuous(n.breaks = 5, labels = function(x) format(x, scientific = TRUE))+
+  geom_bar( position = "stack", stat="identity") +
+  coord_flip() +
+  facet_wrap(~  `type`, ncol =2)+
+  labs(y = NULL, x= NULL, fill = NULL)+
+  theme(axis.text.y = element_text(angle = 90))            
+
+t.compareAsyOriginCountry <- demref2020 %>% mutate(asylum_hcr_region = recode_factor(asylum_hcr_region, `Middle East and North Africa` = 'MENA', `Asia and the Pacific` = 'A&P')) %>%
+  filter(origin_iso3 %in% t.coverageDistribution.ori$origin_iso3[t.coverageDistribution.ori$coverage >=50]) %>%
+  group_by(asylum_hcr_region,typeOfDisaggregationBroad) %>% 
+  summarise(totalEndYear = sum(totalEndYear, na.rm = T),
+            nOrigin = n_distinct(origin)) %>% 
+  mutate(type = '>=50% coverage') %>% bind_rows(
+    demref2020 %>% mutate(asylum_hcr_region = recode_factor(asylum_hcr_region, `Middle East and North Africa` = 'MENA', `Asia and the Pacific` = 'A&P')) %>%
+      filter(origin_iso3 %in% t.coverageDistribution.ori$origin_iso3[t.coverageDistribution.ori$coverage <50]) %>%
+      group_by(asylum_hcr_region,typeOfDisaggregationBroad) %>% 
+      summarise(totalEndYear = sum(totalEndYear, na.rm = T),
+                nOrigin = n_distinct(origin)) %>% 
+      mutate(type = '<50% coverage') 
+  )
+
+p.compareAsyOriginCountry <- ggplot(data = t.compareAsyOriginCountry %>%  
+                                      mutate(asylum_hcr_region = ifelse(is.na(as.character(asylum_hcr_region)),'NA',as.character(asylum_hcr_region))),
+                                    aes(x = fct_reorder(asylum_hcr_region, desc(asylum_hcr_region)), 
+                                        y = totalEndYear, 
+                                        fill = typeOfDisaggregationBroad )) +
+  scale_y_continuous(n.breaks = 5, labels = function(x) format(x, scientific = TRUE))+
+  geom_bar( position = "stack", stat="identity") +
+  coord_flip() +
+  facet_wrap(~  `type`, ncol =2)+
+  labs(y = NULL, x= NULL, fill = NULL)+
+  theme(axis.text.y = element_text(angle = 90)) 
+
+### Create chord diagram
+# library(circlize)
+# 
+# findcolor <- function(i) {
+#   func <-colorRampPalette(c("white", "black"))
+#   color <- func(100)[i]
+#   return(color)}
+# 
+# orig.dest.region <- demref2020 %>% mutate(origin_hcr_subregion = ifelse(is.na(as.character(origin_hcr_subregion)),'NA',as.character(origin_hcr_subregion))) %>%
+#   group_by(orig.region = origin_hcr_subregion,dest.region = asylum_hcr_subregion) %>%
+#   summarize(pop.mig = sum(totalEndYear)/1000,coverage = round(100*sum(totalEndYear[typeOfDisaggregationBroad == 'Sex/Age'], na.rm = T)/sum(totalEndYear, na.rm = T),1)) %>%
+#   arrange(desc(pop.mig)) %>% ungroup() %>% select(-coverage)
+# orig.dest.color <- demref2020 %>% mutate(origin_hcr_subregion = ifelse(is.na(as.character(origin_hcr_subregion)),'NA',as.character(origin_hcr_subregion))) %>%
+#   group_by(orig.region = origin_hcr_subregion,dest.region = asylum_hcr_subregion) %>%
+#   summarize(pop.mig = sum(totalEndYear)/1000,coverage = findcolor(round(100*sum(totalEndYear[typeOfDisaggregationBroad == 'Sex/Age'], na.rm = T)/sum(totalEndYear, na.rm = T),1))) %>%
+#   arrange(desc(pop.mig)) %>% ungroup() %>% pull(coverage)
+# 
+# circos.clear()
+# circos.par(start.degree = 90, canvas.ylim = c(-1.1,1.1), gap.degree = 4, track.margin = c(-0.1, 0.1), points.overflow.warning = FALSE)
+# par(mar = rep(1, 4))
+# 
+# # color palette
+# # colfunc <- colorRampPalette(c('#0083CF', "white"))
+# # 
+# # mycolor <- colfunc(length(concerned_ctries)+6)
+# #mycolor <- mycolor[sample(1:(length(concerned_ctries)+6))]
+# 
+# # Base plot
+# chordDiagram(
+#   x = orig.dest.region , 
+#   grid.col = 'grey',
+#   col = orig.dest.color,
+#   directional = 1,
+#   direction.type = c("arrows", "diffHeight"), 
+#   diffHeight  = -0.04,
+#   annotationTrack = "grid", 
+#   annotationTrackHeight = c(0.05, 0.1),
+#   link.arr.type = "big.arrow", 
+#   link.sort = TRUE, 
+#   link.largest.ontop = TRUE)
+# 
+# circos.trackPlotRegion(
+#   track.index = 1, 
+#   bg.border = NA, 
+#   panel.fun = function(x, y) {
+#     
+#     xlim = get.cell.meta.data("xlim")
+#     sector.index = get.cell.meta.data("sector.index")
+#     
+#     # Add names to the sector. 
+#     circos.text(
+#       x = mean(xlim), 
+#       y = 4, 
+#       labels = sector.index, 
+#       facing = "downward",
+#       niceFacing = T,
+#       cex = 0.7
+#     )
+#     
+#     # Add graduation on axis
+#     circos.axis(
+#       h = "top", 
+#       major.at = NULL,
+#       minor.ticks = 1, 
+#       major.tick.percentage = 0.5,
+#       labels.niceFacing = TRUE,
+#       labels.cex = 0.5)
+#   }
+# )
+
+
 
 # 
 # 

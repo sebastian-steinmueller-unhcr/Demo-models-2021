@@ -212,14 +212,18 @@ t.checkunknowns.ref <- demref2020 %>%
          freq.ageUnknown = ageUnknown/totalEndYear)
 
 # (almost) all are unknown for the following asylum country entries, thus assuming age distribution not available. Canada: statistical disclosure control makes age data unusable
+# Check the percentage, only Canada and UKR have large percentage, and UKR is because of coding error. PHI and NIC should not change
+demref2020 %>% filter(asylum %in% c("ARM","CAN",'DOM','GFR', "UKR", "PHI", "NIC"),typeOfDisaggregationBroad == "Sex/Age") %>% group_by(asylum) %>% summarise(sum(femaleAgeUnknown,na.rm= T)/sum(female,na.rm= T), sum(maleAgeUnknown,na.rm= T)/sum(male,na.rm= T))
+
+
 demref2020 <- demref2020 %>% 
   mutate(typeOfDisaggregationBroad = case_when(
-    asylum %in% c("CAN", "UKR", "PHI", "NIC") & typeOfDisaggregationBroad == "Sex/Age" &  (femaleAgeUnknown>0 | maleAgeUnknown > 0 | is.na(femaleAgeUnknown) | is.na(maleAgeUnknown)) ~ "Sex",  
-    !(asylum %in% c("CAN", "UKR", "PHI", "NIC") & typeOfDisaggregationBroad == "Sex/Age" &  (femaleAgeUnknown>0 | maleAgeUnknown > 0 | is.na(femaleAgeUnknown) | is.na(maleAgeUnknown)) ) ~ typeOfDisaggregationBroad
+    asylum %in% c("CAN", "UKR") & typeOfDisaggregationBroad == "Sex/Age" &  (femaleAgeUnknown>0 | maleAgeUnknown > 0 | is.na(femaleAgeUnknown) | is.na(maleAgeUnknown)) ~ "Sex",  
+    !(asylum %in% c("CAN", "UKR") & typeOfDisaggregationBroad == "Sex/Age" &  (femaleAgeUnknown>0 | maleAgeUnknown > 0 | is.na(femaleAgeUnknown) | is.na(maleAgeUnknown)) ) ~ typeOfDisaggregationBroad
   ),
   typeOfDisaggregation = case_when(
-    asylum %in% c("CAN", "UKR", "PHI", "NIC") & typeOfDisaggregation %in% c("Sex/Age fine", "Sex/Age broad") &  (femaleAgeUnknown>0 | maleAgeUnknown > 0 | is.na(femaleAgeUnknown) | is.na(maleAgeUnknown)) ~ "Sex",  
-    !(asylum %in% c("CAN", "UKR", "PHI", "NIC") & typeOfDisaggregation %in% c("Sex/Age fine", "Sex/Age broad") &  (femaleAgeUnknown>0 | maleAgeUnknown > 0 | is.na(femaleAgeUnknown) | is.na(maleAgeUnknown)) ) ~ typeOfDisaggregation
+    asylum %in% c("CAN", "UKR") & typeOfDisaggregation %in% c("Sex/Age fine", "Sex/Age broad") &  (femaleAgeUnknown>0 | maleAgeUnknown > 0 | is.na(femaleAgeUnknown) | is.na(maleAgeUnknown)) ~ "Sex",  
+    !(asylum %in% c("CAN", "UKR") & typeOfDisaggregation %in% c("Sex/Age fine", "Sex/Age broad") &  (femaleAgeUnknown>0 | maleAgeUnknown > 0 | is.na(femaleAgeUnknown) | is.na(maleAgeUnknown)) ) ~ typeOfDisaggregation
     )
   )
 
@@ -236,7 +240,7 @@ table(demref2020$typeOfDisaggregation, demref2020$typeOfDisaggregationBroad)
 # 4) replace original counts with new counts
 
 ## female unknowns
-
+`
 dhondt_female <- demref2020  %>% 
   filter(typeOfDisaggregationBroad == "Sex/Age" & (femaleAgeUnknown>0))  %>% 
   select(index, female_0_4:femaleAgeUnknown, typeOfDisaggregation)
@@ -363,7 +367,7 @@ demref2020 <- demref2020 %>%
   
 dim(demref2020)
 
-
+`
 
 
 ##### III. write file for descriptive analysis and models ########## 
