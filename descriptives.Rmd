@@ -178,6 +178,7 @@ circos.trackPlotRegion(
 )
 ``` 
 
+
 ## Data coverage histogram  
 
 ```{r pcoverageDistributionasy, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Data coverage histogram by country of asylum"}
@@ -195,13 +196,29 @@ The two figures above have shown drastic difference of distribution of data cove
 p.totalEndYear.ori.asyreghcr
 
 ```  
-Figure \@ref(fig:ptotalEndYearoriasyreghcr) shows the refugee population whose countries of origin is near Europe, Americas and Asia & Pacific bear the biggest missing of demographic data.
+Figure \@ref(fig:ptotalEndYearoriasyreghcr) shows the refugee population whose countries of origin is near Europe, Americas and Asia & Pacific bear the biggest missing of demographic data.  
+```{r pdemCompSameOritop8, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Demographic composition from same origin country and different asylum countries (Top 8 origin countries)"}
+plot(p.demCompSameOri.top8)
+
+```  
+Figure \@ref(fig:pdemCompSameOritop8) shows that even from same origin country, the demographic composition may vary among different destinations. The most drastic situation is spotted in Somalia, where the refugees to South Africa are much more older than the refugees to Ethiopia, with the percentage of 18-59 age group 50% higher. This answers the question 2 above, that origin country may not be a good predictor of demographic composition.  
+
+#### neighbor countries
+```{r pdemCompSameOritop8nei, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Demographic composition from same asylum country and different origin countries (Top 8 asylum countries)"}
+plot(p.demCompSameOri.top8.nei)
+
+```  
 
 ## Demographic distribution in selected countries of asylum
 ```{r ptotalEndYearasyorireghcr, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Demographic disaggregation coverage from selected countries of origin"}
 p.totalEndYear.asy.orireghcr
 ```  
 Figure \@ref(fig:ptotalEndYearasyorireghcr) shows that all of the top 8 asylum countries has nearly 100% demographic data. Even Germany is an european country.
+```{r pdemCompSameAsytop8, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Demographic composition from same asylum country and different origin countries (Top 8 asylum countries)"}
+plot(p.demCompSameAsy.top8)
+
+```  
+Figure \@ref(fig:pdemCompSameOritop8) shows that from the perspective of asylum country, the situation is more complicated. Out of the 8 biggest receiving countries, 3 (Turkey, Pakistan and Bangladesh) only have single source of inflow. The rest of the refugee inflows either have <50% data coverage or less than 1000 total population. Even for the rest of asylum countries that have multiple inflows, the demographic compositions still differ among different origins. The most drastic situation is spotted in Sudan, where the refugees from Central African Republic are much more younger than the refugees from Ethiopia, with the percentage of 18-59 age group 35% lower. This answers the question 3 above, that origin country may not be a good predictor of demographic composition.
 
 ## Compare refugee population's age distribution with origin and asylum country's age distribution
 ```{r pageDistribution, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Compare demographic distribution from selected countries"}

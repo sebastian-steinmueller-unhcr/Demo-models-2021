@@ -25,6 +25,7 @@ library(electoral)
 library(bookdown)
 library(knitr)
 library(kableExtra)
+library(gridExtra)
 
 ### options
 options(scipen = 999)
@@ -44,6 +45,19 @@ source("functions_demomodels.R")
 ### data
 load("data/demref2020.RData")
 load("data/wpp_age_group.RData")
+load('data/neighbor.Rdata')
+
+### helper function
+addUnits <- function(n) {
+  labels <- ifelse(n < 1000, n,  # less than thousands
+                   ifelse(n < 1e6, paste0(round(n/1e3), 'k'),  # in thousands
+                          ifelse(n < 1e9, paste0(round(n/1e6,1), 'M'),  # in millions
+                                 ifelse(n < 1e12, paste0(round(n/1e9,1), 'B'), # in billions
+                                        ifelse(n < 1e15, paste0(round(n/1e12), 'T'), # in trillions
+                                               'too big!'
+                                        )))))
+  return(labels)
+}
 
 
 ##### II. Descriptive analysis of 2020 demo data set for REF and VDA ##### 
@@ -464,7 +478,7 @@ p.totalEndYear.asy.orireghcr <- ggplot(data = t.typeOfDisaggregationBroad.asy.or
   labs(y = NULL, x= NULL, fill = NULL)+
   theme(axis.text.y = element_text(angle = 90))
 
-
+### Compare refugee population's age distribution with origin and asylum country's age distribution
 
 t.ageDistribution.asy <- demref2020 %>% filter(typeOfDisaggregationBroad == 'Sex/Age') %>% mutate_at(vars(14:40),~replace_na(.,0)) %>% group_by(asylum_iso3) %>%
   summarise(total_0_4 = sum(male_0_4+female_0_4), total_5_11 = sum(male_5_11+female_5_11), total_12_17 = sum(male_12_17+female_12_17), total_18_59 = sum(male_18_59+female_18_59), total_60 = sum(male_60+female_60)) %>%
@@ -562,6 +576,110 @@ p.compareAsyOriginCountry <- ggplot(data = t.compareAsyOriginCountry %>%
   labs(y = NULL, x= NULL, fill = NULL)+
   theme(axis.text.y = element_text(angle = 90)) 
 
+
+### Q2.Is origin country a predictor of the demographic composition of refugee populations, even if they live in different countries of asylum?
+
+t.demCompSameOri <- demref2020 %>% mutate_at(vars(14:40),~replace_na(.,0)) %>% group_by(origin_iso3, origin_country, asylum_iso3) %>%
+  summarise(total_0_4 = sum(male_0_4+female_0_4), total_5_11 = sum(male_5_11+female_5_11), total_12_17 = sum(male_12_17+female_12_17), total_18_59 = sum(male_18_59+female_18_59), total_60 = sum(male_60+female_60),
+            coverage = round(100*sum(totalEndYear[typeOfDisaggregationBroad == 'Sex/Age'], na.rm = T)/sum(totalEndYear, na.rm = T),1), poptotal = sum(totalEndYear, na.rm = T)) %>%
+  filter(coverage >= 50, poptotal > 1000) %>% top_n(6, poptotal) %>%
+  gather(key = 'age_group', value = 'population',4:8)  %>% arrange(origin_iso3,asylum_iso3) %>% group_by(origin_iso3,asylum_iso3) %>%
+  mutate(pct = population/sum(population),age_group = factor(age_group, levels = c('total_0_4', 'total_5_11', 'total_12_17','total_18_59','total_60')), asylum_iso3 = paste0(asylum_iso3,', ', addUnits(poptotal),', cov: ', coverage))
+
+t.demCompSameOri.top8 <- t.demCompSameOri %>% filter(origin_iso3 %in% c('SYR','AFG','SSD', 'MMR', 'COD','SOM','SDN','CAF')) %>% mutate(origin_country = as.character(origin_country)) %>% split(f = .$origin_country)
+
+po1 <- ggplot(data = t.demCompSameOri.top8$`Syrian Arab Republic`,
+                            aes(x = age_group,
+                                y = pct,
+                                color = asylum_iso3,
+                                group = asylum_iso3)) +
+  geom_line(linetype = "dashed")+
+  geom_point()+
+  facet_wrap(~origin_country, ncol=1)+
+  labs(y = NULL, x= NULL, fill = NULL)+
+  theme_minimal()+
+  theme(axis.text.x = element_text(angle = 30))
+
+po8 <- po1 %+% t.demCompSameOri.top8$`Central African Republic`
+po5 <- po1 %+% t.demCompSameOri.top8$`Democratic Republic of the Congo`
+po4 <- po1 %+% t.demCompSameOri.top8$Myanmar
+po6 <- po1 %+% t.demCompSameOri.top8$Somalia
+po3 <- po1 %+% t.demCompSameOri.top8$`South Sudan`
+po7 <- po1 %+% t.demCompSameOri.top8$Sudan
+po2 <- po1 %+% t.demCompSameOri.top8$Afghanistan
+
+p.demCompSameOri.top8 <- arrangeGrob(po1,po2,po3,po4,po5,po6,po7,po8, ncol = 2)
+
+### Q3.Is country of asylum a predictor of the demographic composition of refugee populations, even if they come from different countries of origin?
+
+t.demCompSameAsy <- demref2020 %>% mutate_at(vars(14:40),~replace_na(.,0)) %>% group_by(asylum_iso3, asylum_country, origin_iso3) %>%
+  summarise(total_0_4 = sum(male_0_4+female_0_4), total_5_11 = sum(male_5_11+female_5_11), total_12_17 = sum(male_12_17+female_12_17), total_18_59 = sum(male_18_59+female_18_59), total_60 = sum(male_60+female_60),
+            coverage = round(100*sum(totalEndYear[typeOfDisaggregationBroad == 'Sex/Age'], na.rm = T)/sum(totalEndYear, na.rm = T),1), poptotal = sum(totalEndYear, na.rm = T)) %>%
+  filter(coverage >= 50, poptotal > 1000) %>% top_n(6, poptotal) %>%
+  gather(key = 'age_group', value = 'population',4:8)  %>% arrange(asylum_iso3,origin_iso3) %>% group_by(asylum_iso3,origin_iso3) %>%
+  mutate(pct = population/sum(population),age_group = factor(age_group, levels = c('total_0_4', 'total_5_11', 'total_12_17','total_18_59','total_60')), origin_iso3 = paste0(origin_iso3,', ', addUnits(poptotal),', cov: ', coverage))
+
+t.demCompSameAsy.top8 <- t.demCompSameAsy %>% filter(asylum_iso3 %in% c('TUR','PAK','UGA', 'DEU', 'SDN','LBN','BGD','ETH')) %>% mutate(asylum_country = as.character(asylum_country)) %>% split(f = .$asylum_country)
+
+pa1 <- ggplot(data = t.demCompSameAsy.top8$Turkey,
+              aes(x = age_group,
+                  y = pct,
+                  color = origin_iso3,
+                  group = origin_iso3)) +
+  geom_line(linetype = "dashed")+
+  geom_point()+
+  facet_wrap(~asylum_country, ncol=1)+
+  labs(y = NULL, x= NULL, fill = NULL)+
+  theme_minimal()+
+  theme(axis.text.x = element_text(angle = 30))
+
+pa2 <- pa1 %+% t.demCompSameAsy.top8$Pakistan
+pa3 <- pa1 %+% t.demCompSameAsy.top8$Uganda
+pa4 <- pa1 %+% t.demCompSameAsy.top8$Germany
+pa5 <- pa1 %+% t.demCompSameAsy.top8$Sudan
+pa6 <- pa1 %+% t.demCompSameAsy.top8$Lebanon
+pa7 <- pa1 %+% t.demCompSameAsy.top8$Bangladesh
+pa8 <- pa1 %+% t.demCompSameAsy.top8$Ethiopia
+
+p.demCompSameAsy.top8 <- arrangeGrob(pa1,pa2,pa3,pa4,pa5,pa6,pa7,pa8, ncol = 2)
+
+
+### Q4. Neighbors
+find_cty <- function(i){
+  all.neighbors %>% filter(country_iso3 == i) %>% pull(neighbor_iso3)
+}
+
+t.demCompSameOri.nei <- demref2020 %>% mutate_at(vars(14:40),~replace_na(.,0)) %>% group_by(origin_iso3, origin_country, asylum_iso3) %>%
+  summarise(total_0_4 = sum(male_0_4+female_0_4), total_5_11 = sum(male_5_11+female_5_11), total_12_17 = sum(male_12_17+female_12_17), total_18_59 = sum(male_18_59+female_18_59), total_60 = sum(male_60+female_60),
+            coverage = round(100*sum(totalEndYear[typeOfDisaggregationBroad == 'Sex/Age'], na.rm = T)/sum(totalEndYear, na.rm = T),1), poptotal = sum(totalEndYear, na.rm = T)) %>%
+  mutate(origin_iso3 = as.character(origin_iso3), asylum_iso3 = as.character(asylum_iso3)) %>%
+  mutate(is.neighbor = ifelse(asylum_iso3 %in% find_cty(origin_iso3),1,0)) %>% filter(is.neighbor == 1, coverage > 1) %>% top_n(6, poptotal) %>%
+  gather(key = 'age_group', value = 'population',4:8)  %>% arrange(origin_iso3,asylum_iso3) %>% group_by(origin_iso3,asylum_iso3) %>%
+  mutate(pct = population/sum(population),age_group = factor(age_group, levels = c('total_0_4', 'total_5_11', 'total_12_17','total_18_59','total_60')), asylum_iso3 = paste0(asylum_iso3,', ', addUnits(poptotal),', cov: ', coverage))
+
+t.demCompSameOri.top8.nei <- t.demCompSameOri.nei %>% filter(origin_iso3 %in% c('SYR','AFG','SSD', 'MMR', 'COD','SOM','SDN','CAF')) %>% mutate(origin_country = as.character(origin_country)) %>% split(f = .$origin_country)
+
+pon1 <- ggplot(data = t.demCompSameOri.top8.nei$`Syrian Arab Republic`,
+              aes(x = age_group,
+                  y = pct,
+                  color = asylum_iso3,
+                  group = asylum_iso3)) +
+  geom_line(linetype = "dashed")+
+  geom_point()+
+  facet_wrap(~origin_country, ncol=1)+
+  labs(y = NULL, x= NULL, fill = NULL)+
+  theme_minimal()+
+  theme(axis.text.x = element_text(angle = 30))
+
+pon8 <- pon1 %+% t.demCompSameOri.top8.nei$`Central African Republic`
+pon5 <- pon1 %+% t.demCompSameOri.top8.nei$`Democratic Republic of the Congo`
+pon4 <- pon1 %+% t.demCompSameOri.top8.nei$Myanmar
+pon6 <- pon1 %+% t.demCompSameOri.top8.nei$Somalia
+pon3 <- pon1 %+% t.demCompSameOri.top8.nei$`South Sudan`
+pon7 <- pon1 %+% t.demCompSameOri.top8.nei$Sudan
+pon2 <- pon1 %+% t.demCompSameOri.top8.nei$Afghanistan
+
+p.demCompSameOri.top8.nei <- arrangeGrob(pon1,pon2,pon3,pon4,pon5,pon6,pon7,pon8, ncol = 2)
 ### Create chord diagram
 # library(circlize)
 # 
