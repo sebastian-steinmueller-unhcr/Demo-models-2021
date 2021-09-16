@@ -46,7 +46,7 @@ source("functions_demomodels.R")
 load("data/demref2020.RData")
 load("data/wpp_age_group.RData")
 load('data/neighbor.Rdata')
-
+load('data/distance.Rdata')
 ### helper function
 addUnits <- function(n) {
   labels <- ifelse(n < 1000, n,  # less than thousands
@@ -610,6 +610,42 @@ po2 <- po1 %+% t.demCompSameOri.top8$Afghanistan
 
 p.demCompSameOri.top8 <- arrangeGrob(po1,po2,po3,po4,po5,po6,po7,po8, ncol = 2)
 
+## age and sex
+t.ageSexCompSameOri <- demref2020 %>% mutate_at(vars(14:40),~replace_na(.,0)) %>% group_by(origin_iso3, origin_country, asylum_iso3) %>%
+  summarise(male.0to4 = sum(male_0_4), male.5to11 = sum(male_5_11), male.12to17 = sum(male_12_17), male.18to59 = sum(male_18_59), male.60plus = sum(male_60),
+            female.0to4 = sum(female_0_4),female.5to11 = sum(female_5_11), female.12to17 = sum(female_12_17), female.18to59 = sum(female_18_59), female.60plus = sum(female_60),
+            coverage = round(100*sum(totalEndYear[typeOfDisaggregationBroad == 'Sex/Age'], na.rm = T)/sum(totalEndYear, na.rm = T),1), poptotal = sum(totalEndYear, na.rm = T)) %>%
+  filter(coverage >= 50, poptotal > 1000) %>% top_n(6, poptotal) %>%
+  gather(key = 'age_group', value = 'population',4:13) %>% separate(age_group,c('Sex','Age'))  %>% arrange(origin_iso3,asylum_iso3) %>% group_by(origin_iso3,asylum_iso3) %>%
+  mutate(pct = population/sum(population),Age = factor(Age, levels = c('0to4', '5to11', '12to17','18to59','60plus')), asylum_iso3 = paste0(asylum_iso3,', ', addUnits(poptotal),', cov: ', coverage))
+
+t.ageSexCompSameOri.top8 <- t.ageSexCompSameOri %>% filter(origin_iso3 %in% c('SYR','AFG','SSD', 'MMR', 'COD','SOM','SDN','CAF')) %>% mutate(origin_country = as.character(origin_country)) %>% split(f = .$origin_country)
+
+
+pASo1 <- ggplot(data = t.ageSexCompSameOri.top8$`Syrian Arab Republic`,
+                aes(x = Age,
+                    y = pct,
+                    color = asylum_iso3,
+                    group = asylum_iso3)) +
+  geom_line(data = . %>% filter(Sex == 'male'), linetype = "dashed")+
+  geom_line(data = . %>% filter(Sex == 'female'), aes(y = pct * -1), linetype = "dashed")+
+  geom_point(data = . %>% filter(Sex == 'male'))+
+  geom_point(data = . %>% filter(Sex == 'female'), aes(y = pct * -1),)+
+  annotate("text", x = '0to4', y = 0.25, label = "Male")+
+  annotate("text", x =  '0to4', y = -0.25, label = "Female")+
+  coord_flip()+
+  facet_wrap(~origin_country, ncol=1)+
+  labs(y = NULL, x= NULL, fill = NULL)+
+  theme_minimal()
+
+pASo2 <- pASo1 %+% t.ageSexCompSameOri.top8$Afghanistan
+pASo3 <- pASo1 %+% t.ageSexCompSameOri.top8$`South Sudan`
+pASo4 <- pASo1 %+% t.ageSexCompSameOri.top8$Myanmar
+pASo5 <- pASo1 %+% t.ageSexCompSameOri.top8$`Democratic Republic of the Congo`
+pASo6 <- pASo1 %+% t.ageSexCompSameOri.top8$Somalia
+
+p.ageSexCompSameOri.top6 <- arrangeGrob(pASo1,pASo2,pASo3,pASo4,pASo5,pASo6 ,ncol = 2)
+
 ### Q3.Is country of asylum a predictor of the demographic composition of refugee populations, even if they come from different countries of origin?
 
 t.demCompSameAsy <- demref2020 %>% mutate_at(vars(14:40),~replace_na(.,0)) %>% group_by(asylum_iso3, asylum_country, origin_iso3) %>%
@@ -643,6 +679,42 @@ pa8 <- pa1 %+% t.demCompSameAsy.top8$Ethiopia
 
 p.demCompSameAsy.top8 <- arrangeGrob(pa1,pa2,pa3,pa4,pa5,pa6,pa7,pa8, ncol = 2)
 
+## Age and sex
+
+t.ageSexCompSameAsy <- demref2020 %>% mutate_at(vars(14:40),~replace_na(.,0)) %>% group_by(asylum_iso3, asylum_country, origin_iso3) %>%
+  summarise(male.0to4 = sum(male_0_4), male.5to11 = sum(male_5_11), male.12to17 = sum(male_12_17), male.18to59 = sum(male_18_59), male.60plus = sum(male_60),
+            female.0to4 = sum(female_0_4),female.5to11 = sum(female_5_11), female.12to17 = sum(female_12_17), female.18to59 = sum(female_18_59), female.60plus = sum(female_60),
+            coverage = round(100*sum(totalEndYear[typeOfDisaggregationBroad == 'Sex/Age'], na.rm = T)/sum(totalEndYear, na.rm = T),1), poptotal = sum(totalEndYear, na.rm = T)) %>%
+  filter(coverage >= 50, poptotal > 1000) %>% top_n(6, poptotal) %>%
+  gather(key = 'age_group', value = 'population',4:13) %>% separate(age_group,c('Sex','Age'))  %>% arrange(asylum_iso3,origin_iso3) %>% group_by(asylum_iso3,origin_iso3) %>%
+  mutate(pct = population/sum(population),Age = factor(Age, levels = c('0to4', '5to11', '12to17','18to59','60plus')), origin_iso3 = paste0(origin_iso3,', ', addUnits(poptotal),', cov: ', coverage))
+
+t.ageSexCompSameAsy.top8 <- t.ageSexCompSameAsy %>% filter(asylum_iso3 %in% c('TUR','PAK','UGA', 'DEU', 'SDN','LBN','BGD','ETH')) %>% mutate(asylum_country = as.character(asylum_country)) %>% split(f = .$asylum_country)
+
+
+pASa1 <- ggplot(data = t.ageSexCompSameAsy.top8$Turkey,
+                aes(x = Age,
+                    y = pct,
+                    color = origin_iso3,
+                    group = origin_iso3)) +
+  geom_line(data = . %>% filter(Sex == 'male'), linetype = "dashed")+
+  geom_line(data = . %>% filter(Sex == 'female'), aes(y = pct * -1), linetype = "dashed")+
+  geom_point(data = . %>% filter(Sex == 'male'))+
+  geom_point(data = . %>% filter(Sex == 'female'), aes(y = pct * -1),)+
+  annotate("text", x = '0to4', y = 0.25, label = "Male")+
+  annotate("text", x =  '0to4', y = -0.25, label = "Female")+
+  coord_flip()+
+  facet_wrap(~asylum_country, ncol=1)+
+  labs(y = NULL, x= NULL, fill = NULL)+
+  theme_minimal()
+
+pASa2 <- pASa1 %+% t.ageSexCompSameAsy.top8$Pakistan
+pASa3 <- pASa1 %+% t.ageSexCompSameAsy.top8$Uganda
+pASa4 <- pASa1 %+% t.ageSexCompSameAsy.top8$Germany
+pASa5 <- pASa1 %+% t.ageSexCompSameAsy.top8$Sudan
+pASa6 <- pASa1 %+% t.ageSexCompSameAsy.top8$Lebanon
+
+p.ageSexCompSameAsy.top6 <- arrangeGrob(pASa1,pASa2,pASa3,pASa4,pASa5,pASa6 ,ncol = 2)
 
 ### Q4. Neighbors
 find_cty <- function(i){
@@ -680,6 +752,60 @@ pon7 <- pon1 %+% t.demCompSameOri.top8.nei$Sudan
 pon2 <- pon1 %+% t.demCompSameOri.top8.nei$Afghanistan
 
 p.demCompSameOri.top8.nei <- arrangeGrob(pon1,pon2,pon3,pon4,pon5,pon6,pon7,pon8, ncol = 2)
+
+
+# t.demCompSameAsy.nei <- demref2020 %>% mutate_at(vars(14:40),~replace_na(.,0)) %>% group_by(asylum_iso3, asylum_country, origin_iso3) %>%
+#   summarise(total_0_4 = sum(male_0_4+female_0_4), total_5_11 = sum(male_5_11+female_5_11), total_12_17 = sum(male_12_17+female_12_17), total_18_59 = sum(male_18_59+female_18_59), total_60 = sum(male_60+female_60),
+#             coverage = round(100*sum(totalEndYear[typeOfDisaggregationBroad == 'Sex/Age'], na.rm = T)/sum(totalEndYear, na.rm = T),1), poptotal = sum(totalEndYear, na.rm = T)) %>%
+#   mutate(origin_iso3 = as.character(origin_iso3), asylum_iso3 = as.character(asylum_iso3)) %>%
+#   mutate(is.neighbor = ifelse(asylum_iso3 %in% find_cty(origin_iso3),1,0)) %>% filter(is.neighbor == 1, coverage > 1) %>% top_n(6, poptotal) %>%
+#   gather(key = 'age_group', value = 'population',4:8)  %>% arrange(asylum_iso3,origin_iso3) %>% group_by(asylum_iso3,origin_iso3) %>%
+#   mutate(pct = population/sum(population),age_group = factor(age_group, levels = c('total_0_4', 'total_5_11', 'total_12_17','total_18_59','total_60')), origin_iso3 = paste0(origin_iso3,', ', addUnits(poptotal),', cov: ', coverage))
+# 
+# t.demCompSameAsy.top8.nei <- t.demCompSameAsy.nei %>% filter(asylum_iso3 %in% c('TUR','PAK','UGA', 'DEU', 'SDN','LBN','BGD','ETH')) %>% mutate(asylum_country = as.character(asylum_country)) %>% split(f = .$asylum_country)
+# 
+# pan1 <- ggplot(data = t.demCompSameAsy.top8.nei$Turkey,
+#               aes(x = age_group,
+#                   y = pct,
+#                   color = origin_iso3,
+#                   group = origin_iso3)) +
+#   geom_line(linetype = "dashed")+
+#   geom_point()+
+#   facet_wrap(~asylum_country, ncol=1)+
+#   labs(y = NULL, x= NULL, fill = NULL)+
+#   theme_minimal()+
+#   theme(axis.text.x = element_text(angle = 30))
+# 
+# pan2 <- pan1 %+% t.demCompSameAsy.top8.nei$Pakistan
+# pan3 <- pan1 %+% t.demCompSameAsy.top8.nei$Uganda
+# pan4 <- pan1 %+% t.demCompSameAsy.top8.nei$Germany
+# pan5 <- pan1 %+% t.demCompSameAsy.top8.nei$Sudan
+# pan6 <- pan1 %+% t.demCompSameAsy.top8.nei$Lebanon
+# pan7 <- pan1 %+% t.demCompSameAsy.top8.nei$Bangladesh
+# pan8 <- pan1 %+% t.demCompSameAsy.top8.nei$Ethiopia
+# 
+# p.demCompSameAsy.top8.nei <- arrangeGrob(pan1,pan2,pan3,pan4,pan5,pan6,pan7,pan8, ncol = 2)
+
+
+
+######### distance ##########
+# get_distance <- function(ori,asy) distance_matrix[ori,asy]
+# distance_matrix <- as.data.frame(distance_matrix)
+# t.dist <- demref2020 %>% group_by(origin_iso3,asylum_iso3) %>% 
+#   summarise(coverage = round(100*sum(totalEndYear[typeOfDisaggregationBroad == 'Sex/Age'], na.rm = T)/sum(totalEndYear, na.rm = T),1), poptotal = sum(totalEndYear, na.rm = T)) %>% ungroup() %>%
+#   mutate(origin_iso3 = as.character(origin_iso3), asylum_iso3 = as.character(asylum_iso3)) %>% rowwise() %>%
+#   mutate( distance = list(get_distance(origin_iso3,asylum_iso3))) %>% ungroup()
+# 
+
+
+
+
+
+
+
+
+
+
 ### Create chord diagram
 # library(circlize)
 # 

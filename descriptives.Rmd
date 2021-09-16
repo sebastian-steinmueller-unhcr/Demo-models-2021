@@ -202,6 +202,10 @@ plot(p.demCompSameOri.top8)
 
 ```  
 Figure \@ref(fig:pdemCompSameOritop8) shows that even from same origin country, the demographic composition may vary among different destinations. The most drastic situation is spotted in Somalia, where the refugees to South Africa are much more older than the refugees to Ethiopia, with the percentage of 18-59 age group 50% higher. This answers the question 2 above, that origin country may not be a good predictor of demographic composition.  
+```{r pageSexCompSameOritop6, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Age and sex composition from same origin country and different asylum countries (Top 6 origin countries)"}
+plot(p.ageSexCompSameOri.top6)
+
+```  
 
 #### neighbor countries
 ```{r pdemCompSameOritop8nei, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Demographic composition from same asylum country and different origin countries (Top 8 asylum countries)"}
@@ -219,6 +223,11 @@ plot(p.demCompSameAsy.top8)
 
 ```  
 Figure \@ref(fig:pdemCompSameOritop8) shows that from the perspective of asylum country, the situation is more complicated. Out of the 8 biggest receiving countries, 3 (Turkey, Pakistan and Bangladesh) only have single source of inflow. The rest of the refugee inflows either have <50% data coverage or less than 1000 total population. Even for the rest of asylum countries that have multiple inflows, the demographic compositions still differ among different origins. The most drastic situation is spotted in Sudan, where the refugees from Central African Republic are much more younger than the refugees from Ethiopia, with the percentage of 18-59 age group 35% lower. This answers the question 3 above, that origin country may not be a good predictor of demographic composition.
+  
+```{r pageSexCompSameAsytop6, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Age and sex composition from same asylum country and different origin countries (Top 6 asylum countries)"}
+plot(p.ageSexCompSameAsy.top6)
+
+```  
 
 ## Compare refugee population's age distribution with origin and asylum country's age distribution
 ```{r pageDistribution, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Compare demographic distribution from selected countries"}
