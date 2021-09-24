@@ -207,11 +207,7 @@ plot(p.ageSexCompSameOri.top6)
 
 ```  
 
-#### neighbor countries
-```{r pdemCompSameOritop8nei, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Demographic composition from same asylum country and different origin countries (Top 8 asylum countries)"}
-plot(p.demCompSameOri.top8.nei)
 
-```  
 
 ## Demographic distribution in selected countries of asylum
 ```{r ptotalEndYearasyorireghcr, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Demographic disaggregation coverage from selected countries of origin"}
@@ -233,6 +229,100 @@ plot(p.ageSexCompSameAsy.top6)
 ```{r pageDistribution, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Compare demographic distribution from selected countries"}
 p.ageDistribution
 ```  
+
+## Marginal analysis on Distance, Neighboring country, Economic status
+In the meeting we discussed that distance between origin and destination countries, whether origin and destination are neighboring country, and the economic status between origin and destination countries may be the factor that could explain the variance. Below I will analyse how these three factors may influence the demographic composition of refugees.  
+
+### Distance
+Distances are calculated between centroids of countries, measured by meter.
+```{r pdistpoint, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Total population and data coverage by distance"}
+p.dist.point
+```  
+
+```{r pdisthist, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Total population and data coverage by distance, in brackets"}
+p.dist.hist
+```  
+From \@ref(fig:pdistpoint) and \@ref(fig:pdisthist) we can see, the total population of refugee decreases when the distance between origin and asylum countries become further. The demographic data coverage of distant refugee movements are also getting lower.
+```{r pdistbracketbigworld, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Age and sex composition grouped by travel distance, world"}
+p.dist.bracket.big.world
+
+```  
+\@ref(fig:pdistbracketbigworld) shows that the demographic composition of refugees moving within 1000 Km and moving 1000 Km - 5000 Km are close. We can see a big difference in demographic composition for refugees moving more than 5000 Km, where those refugees are older and their gender is more male-dominant. But the low data coverage for this distance bracket casts a shadow on the inference.
+```{r pdistbracketbigctrytop6, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Age and sex composition grouped by travel distance, Top 6 origin countries"}
+plot(p.dist.bracket.big.ctry.top6)
+
+```  
+When zooming into country-level data, \@ref(fig:pdistbracketbigctrytop6) shows that except for South Sudan and Dem. Rep. Congo, most countries have a trend that the refugees tends to be older and male-biased when traveling further, by comparing <1000Km group and 1000-5000Km group. All 6 countries have low demographic data coverage for >5000Km group.  
+To conclude, generally speaking, the distance between origin and destination countries may be a factor that impacts demographic composition of refugees, but for some countries (mostly Sub-Saharan African countries) this might not be true. Also, the data coverage for refugees with longer travel distance are low.  
+
+### Neighboring Country
+The countries that sharing a piece of border is defined as neighboring country.
+
+```{r pneighborhist, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Total population and data coverage by if the origin and destination countries are neighbors"}
+p.neighbor.hist
+```   
+From \@ref(fig:pneighborhist) we can see, same as the distance criteria, the neighboring country criteria still has the low data coverage issue. 27 per cent of refugees are traveling to countries of asylum not neighboring their home country while the demographic data for this population is only about 36%.  
+```{r pneighborworld, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Age and sex composition grouped by neighboring status, world"}
+p.neighbor.world
+```  
+
+```{r pneighborctrytop6, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Age and sex composition grouped by neighboring status, top 6 origin countries"}
+plot(p.neighbor.ctry.top6)
+```  
+Above plot shows that for the top 6 origin countries of refugees, with high data coverage, When going to non-neighboring countries, the proportion of adult male will increase significantly. This may  due to the high cost of time and effort required to travel to non-neighboring countries.  
+
+### Economic status  
+Here every origin and destination country is assigned with World Bank income class classification, with 4 levels: Low income, Lower middle income, Upper middle income, and High income. So if a refugee traveling from a lower income level country to a higher income level country, then he is marked by '(he/she is traveling to a) Higher income lvl' in column 'status.change' and vice versa.
+```{r pincomehist, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Total population and data coverage by the origin and destination countries' income level"}
+p.income.hist
+```   
+From above plot we can see that majority of refugees are traveling to an asylum country that has a same or higher income level than his/her original country. Surprisingly, the demographic data coverage is high among all three situations, making it a potential good predictor.  
+```{r pjincomeworld, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Age and sex composition grouped by the origin and destination countries' income level, world"}
+p.income.world
+```  
+On world level, the refugees traveling to higher income level countries tends to be older and more male-dominant.  
+```{r pneighborctry, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Age and sex composition grouped by neighboring status, top 6 origin country"}
+plot(p.income.ctry.top6)
+```  
+Looking at top 6 origin countries of refugee, the situation varies. For South Sudan, Myanmar, and Dem. Rep. Congo, it's similar to the global situation. For country like SAR and Afghanistan, the demographic composition of refugees that traveling to higher income level countries are quite the same. Somalia is an outlier where there are more males when traveling to countries with same income level as Somalia rather than higher.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

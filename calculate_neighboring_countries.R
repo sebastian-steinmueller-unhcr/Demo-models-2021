@@ -2,6 +2,7 @@ library(dplyr)
 library(tidyr)
 library(rgeos)
 library(spdep)
+library(geosphere)
 library("sp")
 library("RColorBrewer")
 library("ggplot2")
@@ -133,26 +134,37 @@ bnd.df <- left_join(bnd.df, select(bnd@data,id,CARTOGRAPH),by = 'id') %>%
 
 library(scatterpie)
 #prepare data for pie charts
-places <- data.frame(matrix(ncol = 5, nrow = length(world.robin)))
+places <- data.frame(matrix(ncol = 5, nrow = length(world.un)))
 colnames(places) <- c("ISO3", "TERR_NAME", "long", "lat", "STATUS")
 
-places$ISO3 <- as.character(world.robin$ISO3_CODE)
-places$TERR_NAME <- world.robin$TERR_NAME
-places$long <- coordinates(world.robin)[, 1]
-places$lat <- coordinates(world.robin)[, 2]
-places$STATUS <- world.robin$STATUS
+places$ISO3 <- as.character(world.un$ISO3_CODE)
+places$TERR_NAME <- world.un$TERR_NAME
+places$long <- coordinates(world.un)[, 1]
+places$lat <- coordinates(world.un)[, 2]
+places$STATUS <- world.un$STATUS
 places$ISO3[places$TERR_NAME == 'Abyei'] <- 'AB9'
 
 distdf <- places %>% filter(ISO3 != '<NA>', ISO3 %in% union(demref2020 %>% distinct(asylum_iso3) %>% pull(), demref2020 %>% distinct(origin_iso3) %>% pull())) %>%
   filter(STATUS != 'PT Territory', !(TERR_NAME %in% c('Guernsey','Senkaku Islands','Gaza Strip','Kuril islands')) ) %>%
   
   group_by(ISO3) %>%
-  sample_n(1)   
-distmatrix <- distdf %>% ungroup() %>% select(long,lat) %>% as.matrix()
-rownames(distmatrix) <- distdf %>% pull(ISO3)
+  sample_n(1)    
 
-distance_matrix <- dist(distmatrix,  method = "euclidean", diag = T) %>% as.matrix()
-save(distance_matrix,file = 'data/distance.Rdata')
+
+distmatrix <- distdf %>% ungroup() %>% select(long,lat) %>% as.matrix()
+
+
+distance_matrix <- distm(distmatrix, fun = distHaversine) %>% as.data.frame()
+rownames(distance_matrix) <- distdf %>% pull(ISO3)
+colnames(distance_matrix) <- distdf %>% pull(ISO3)
+
+m <- as.matrix(distance_matrix)
+distance_long <- data.frame(col=colnames(m)[col(m)], row=rownames(m)[row(m)], dist=c(m))
+
+
+
+
+save(distance_matrix,distance_long,file = 'data/distance.Rdata')
 
 
 

@@ -26,6 +26,7 @@ library(bookdown)
 library(knitr)
 library(kableExtra)
 library(gridExtra)
+library(cepiigeodist)
 
 ### options
 options(scipen = 999)
@@ -45,8 +46,9 @@ source("functions_demomodels.R")
 ### data
 load("data/demref2020.RData")
 load("data/wpp_age_group.RData")
-load('data/neighbor.Rdata')
-load('data/distance.Rdata')
+load('data/neighbor.Rdata') 
+load('data/distance.Rdata') 
+load('data/WB_classifications_2020.Rdata')
 ### helper function
 addUnits <- function(n) {
   labels <- ifelse(n < 1000, n,  # less than thousands
@@ -717,41 +719,41 @@ pASa6 <- pASa1 %+% t.ageSexCompSameAsy.top8$Lebanon
 p.ageSexCompSameAsy.top6 <- arrangeGrob(pASa1,pASa2,pASa3,pASa4,pASa5,pASa6 ,ncol = 2)
 
 ### Q4. Neighbors
-find_cty <- function(i){
-  all.neighbors %>% filter(country_iso3 == i) %>% pull(neighbor_iso3)
-}
-
-t.demCompSameOri.nei <- demref2020 %>% mutate_at(vars(14:40),~replace_na(.,0)) %>% group_by(origin_iso3, origin_country, asylum_iso3) %>%
-  summarise(total_0_4 = sum(male_0_4+female_0_4), total_5_11 = sum(male_5_11+female_5_11), total_12_17 = sum(male_12_17+female_12_17), total_18_59 = sum(male_18_59+female_18_59), total_60 = sum(male_60+female_60),
-            coverage = round(100*sum(totalEndYear[typeOfDisaggregationBroad == 'Sex/Age'], na.rm = T)/sum(totalEndYear, na.rm = T),1), poptotal = sum(totalEndYear, na.rm = T)) %>%
-  mutate(origin_iso3 = as.character(origin_iso3), asylum_iso3 = as.character(asylum_iso3)) %>%
-  mutate(is.neighbor = ifelse(asylum_iso3 %in% find_cty(origin_iso3),1,0)) %>% filter(is.neighbor == 1, coverage > 1) %>% top_n(6, poptotal) %>%
-  gather(key = 'age_group', value = 'population',4:8)  %>% arrange(origin_iso3,asylum_iso3) %>% group_by(origin_iso3,asylum_iso3) %>%
-  mutate(pct = population/sum(population),age_group = factor(age_group, levels = c('total_0_4', 'total_5_11', 'total_12_17','total_18_59','total_60')), asylum_iso3 = paste0(asylum_iso3,', ', addUnits(poptotal),', cov: ', coverage))
-
-t.demCompSameOri.top8.nei <- t.demCompSameOri.nei %>% filter(origin_iso3 %in% c('SYR','AFG','SSD', 'MMR', 'COD','SOM','SDN','CAF')) %>% mutate(origin_country = as.character(origin_country)) %>% split(f = .$origin_country)
-
-pon1 <- ggplot(data = t.demCompSameOri.top8.nei$`Syrian Arab Republic`,
-              aes(x = age_group,
-                  y = pct,
-                  color = asylum_iso3,
-                  group = asylum_iso3)) +
-  geom_line(linetype = "dashed")+
-  geom_point()+
-  facet_wrap(~origin_country, ncol=1)+
-  labs(y = NULL, x= NULL, fill = NULL)+
-  theme_minimal()+
-  theme(axis.text.x = element_text(angle = 30))
-
-pon8 <- pon1 %+% t.demCompSameOri.top8.nei$`Central African Republic`
-pon5 <- pon1 %+% t.demCompSameOri.top8.nei$`Democratic Republic of the Congo`
-pon4 <- pon1 %+% t.demCompSameOri.top8.nei$Myanmar
-pon6 <- pon1 %+% t.demCompSameOri.top8.nei$Somalia
-pon3 <- pon1 %+% t.demCompSameOri.top8.nei$`South Sudan`
-pon7 <- pon1 %+% t.demCompSameOri.top8.nei$Sudan
-pon2 <- pon1 %+% t.demCompSameOri.top8.nei$Afghanistan
-
-p.demCompSameOri.top8.nei <- arrangeGrob(pon1,pon2,pon3,pon4,pon5,pon6,pon7,pon8, ncol = 2)
+# find_cty <- function(i){
+#   all.neighbors %>% filter(country_iso3 == i) %>% pull(neighbor_iso3)
+# }
+# 
+# t.demCompSameOri.nei <- demref2020 %>% mutate_at(vars(14:40),~replace_na(.,0)) %>% group_by(origin_iso3, origin_country, asylum_iso3) %>%
+#   summarise(total_0_4 = sum(male_0_4+female_0_4), total_5_11 = sum(male_5_11+female_5_11), total_12_17 = sum(male_12_17+female_12_17), total_18_59 = sum(male_18_59+female_18_59), total_60 = sum(male_60+female_60),
+#             coverage = round(100*sum(totalEndYear[typeOfDisaggregationBroad == 'Sex/Age'], na.rm = T)/sum(totalEndYear, na.rm = T),1), poptotal = sum(totalEndYear, na.rm = T)) %>%
+#   mutate(origin_iso3 = as.character(origin_iso3), asylum_iso3 = as.character(asylum_iso3)) %>%
+#   mutate(is.neighbor = ifelse(asylum_iso3 %in% find_cty(origin_iso3),1,0)) %>% filter(is.neighbor == 1, coverage > 1) %>% top_n(6, poptotal) %>%
+#   gather(key = 'age_group', value = 'population',4:8)  %>% arrange(origin_iso3,asylum_iso3) %>% group_by(origin_iso3,asylum_iso3) %>%
+#   mutate(pct = population/sum(population),age_group = factor(age_group, levels = c('total_0_4', 'total_5_11', 'total_12_17','total_18_59','total_60')), asylum_iso3 = paste0(asylum_iso3,', ', addUnits(poptotal),', cov: ', coverage))
+# 
+# t.demCompSameOri.top8.nei <- t.demCompSameOri.nei %>% filter(origin_iso3 %in% c('SYR','AFG','SSD', 'MMR', 'COD','SOM','SDN','CAF')) %>% mutate(origin_country = as.character(origin_country)) %>% split(f = .$origin_country)
+# 
+# pon1 <- ggplot(data = t.demCompSameOri.top8.nei$`Syrian Arab Republic`,
+#               aes(x = age_group,
+#                   y = pct,
+#                   color = asylum_iso3,
+#                   group = asylum_iso3)) +
+#   geom_line(linetype = "dashed")+
+#   geom_point()+
+#   facet_wrap(~origin_country, ncol=1)+
+#   labs(y = NULL, x= NULL, fill = NULL)+
+#   theme_minimal()+
+#   theme(axis.text.x = element_text(angle = 30))
+# 
+# pon8 <- pon1 %+% t.demCompSameOri.top8.nei$`Central African Republic`
+# pon5 <- pon1 %+% t.demCompSameOri.top8.nei$`Democratic Republic of the Congo`
+# pon4 <- pon1 %+% t.demCompSameOri.top8.nei$Myanmar
+# pon6 <- pon1 %+% t.demCompSameOri.top8.nei$Somalia
+# pon3 <- pon1 %+% t.demCompSameOri.top8.nei$`South Sudan`
+# pon7 <- pon1 %+% t.demCompSameOri.top8.nei$Sudan
+# pon2 <- pon1 %+% t.demCompSameOri.top8.nei$Afghanistan
+# 
+# p.demCompSameOri.top8.nei <- arrangeGrob(pon1,pon2,pon3,pon4,pon5,pon6,pon7,pon8, ncol = 2)
 
 
 # t.demCompSameAsy.nei <- demref2020 %>% mutate_at(vars(14:40),~replace_na(.,0)) %>% group_by(asylum_iso3, asylum_country, origin_iso3) %>%
@@ -789,105 +791,263 @@ p.demCompSameOri.top8.nei <- arrangeGrob(pon1,pon2,pon3,pon4,pon5,pon6,pon7,pon8
 
 
 ######### distance ##########
-# get_distance <- function(ori,asy) distance_matrix[ori,asy]
-# distance_matrix <- as.data.frame(distance_matrix)
-# t.dist <- demref2020 %>% group_by(origin_iso3,asylum_iso3) %>% 
-#   summarise(coverage = round(100*sum(totalEndYear[typeOfDisaggregationBroad == 'Sex/Age'], na.rm = T)/sum(totalEndYear, na.rm = T),1), poptotal = sum(totalEndYear, na.rm = T)) %>% ungroup() %>%
-#   mutate(origin_iso3 = as.character(origin_iso3), asylum_iso3 = as.character(asylum_iso3)) %>% rowwise() %>%
-#   mutate( distance = list(get_distance(origin_iso3,asylum_iso3))) %>% ungroup()
-# 
+
+t.dist <- demref2020 %>% group_by(origin_iso3,asylum_iso3) %>%
+  summarise(coverage = round(100*sum(totalEndYear[typeOfDisaggregationBroad == 'Sex/Age'], na.rm = T)/sum(totalEndYear, na.rm = T),1), poptotal = sum(totalEndYear, na.rm = T)) %>% ungroup() %>%
+  mutate(origin_iso3 = as.character(origin_iso3), asylum_iso3 = as.character(asylum_iso3)) %>% 
+  left_join(distance_long, by = c('origin_iso3' = 'col', 'asylum_iso3' = 'row')) %>% filter(!is.na(dist))
+
+t.dist.bracket <- t.dist %>% mutate(bracket = cut(dist, breaks=seq(0, 20000000,1000000), right = FALSE)) %>% group_by(bracket) %>% summarise(coverage = weighted.mean(coverage,poptotal),poptotal = sum(poptotal))
+
+p.dist.point <- ggplot(data = t.dist, aes(x = dist, y = poptotal,alpha =coverage/100)) + geom_point() + scale_alpha_continuous(name = 'dem. data cov.', range = c(0.2,1))
+
+
+t.dist.bracket.big <- t.dist %>% mutate(bracket = case_when(dist < 1000000 ~ '<1000Km',
+                                                            dist >= 1000000  & dist < 5000000 ~ '1000-5000Km',
+                                                            dist >= 5000000 ~ '>5000Km')) %>% group_by(bracket) %>% summarise(coverage = weighted.mean(coverage,poptotal),poptotal = sum(poptotal)) %>% mutate(bracket = factor(bracket,levels = c('<1000Km','1000-5000Km','>5000Km')))
+
+p.dist.hist <- ggplot(data = t.dist.bracket.big, aes(x = bracket, y = poptotal,alpha =coverage/100)) + geom_bar(stat = 'identity') + scale_alpha_continuous(name = 'dem. data cov.', range = c(0.5,1))+ theme(axis.text.x = element_text(angle =45))
+
+
+t.dist.bracket.big.world <- demref2020 %>% mutate_at(vars(14:40),~replace_na(.,0)) %>%
+  left_join(distance_long, by = c('origin_iso3' = 'col', 'asylum_iso3' = 'row')) %>% filter(!is.na(dist)) %>%
+  mutate(bracket = case_when(dist < 1000000 ~ '<1000Km',
+                             dist >= 1000000  & dist < 5000000 ~ '1000-5000Km',
+                             dist >= 5000000 ~ '>5000Km')) %>%
+  group_by(bracket) %>%
+  summarise(male.0to4 = sum(male_0_4), male.5to11 = sum(male_5_11), male.12to17 = sum(male_12_17), male.18to59 = sum(male_18_59), male.60plus = sum(male_60),
+            female.0to4 = sum(female_0_4),female.5to11 = sum(female_5_11), female.12to17 = sum(female_12_17), female.18to59 = sum(female_18_59), female.60plus = sum(female_60),
+            coverage = round(100*sum(totalEndYear[typeOfDisaggregationBroad == 'Sex/Age'], na.rm = T)/sum(totalEndYear, na.rm = T),1), poptotal = sum(totalEndYear, na.rm = T)) %>%
+  gather(key = 'age_group', value = 'population',2:11) %>% separate(age_group,c('Sex','Age'))   %>% group_by(bracket) %>%
+  mutate(pct = population/sum(population),Age = factor(Age, levels = c('0to4', '5to11', '12to17','18to59','60plus')),bracket = factor(bracket,levels = c('<1000Km','1000-5000Km','>5000Km')), bracket = paste0(bracket,', ', addUnits(poptotal),', cov: ', coverage))
+
+
+
+p.dist.bracket.big.world <- ggplot(data = t.dist.bracket.big.world,
+                aes(x = Age,
+                    y = pct,
+                    color = bracket,
+                    group = bracket)) +
+  geom_line(data = . %>% filter(Sex == 'male'), linetype = "dashed")+
+  geom_line(data = . %>% filter(Sex == 'female'), aes(y = pct * -1), linetype = "dashed")+
+  geom_point(data = . %>% filter(Sex == 'male'))+
+  geom_point(data = . %>% filter(Sex == 'female'), aes(y = pct * -1),)+
+  annotate("text", x = '0to4', y = 0.25, label = "Male")+
+  annotate("text", x =  '0to4', y = -0.25, label = "Female")+
+  coord_flip()+
+  labs(y = NULL, x= NULL, fill = NULL)+
+  theme_minimal()
+
+t.dist.bracket.big.ctry <- demref2020 %>% mutate_at(vars(14:40),~replace_na(.,0)) %>%
+  left_join(distance_long, by = c('origin_iso3' = 'col', 'asylum_iso3' = 'row')) %>% filter(!is.na(dist)) %>%
+  mutate(bracket = case_when(dist < 1000000 ~ '<1000Km',
+                             dist >= 1000000  & dist < 5000000 ~ '1000-5000Km',
+                             dist >= 5000000 ~ '>5000Km')) %>%
+  group_by(origin_iso3,origin_country, bracket) %>%
+  summarise(male.0to4 = sum(male_0_4), male.5to11 = sum(male_5_11), male.12to17 = sum(male_12_17), male.18to59 = sum(male_18_59), male.60plus = sum(male_60),
+            female.0to4 = sum(female_0_4),female.5to11 = sum(female_5_11), female.12to17 = sum(female_12_17), female.18to59 = sum(female_18_59), female.60plus = sum(female_60),
+            coverage = round(100*sum(totalEndYear[typeOfDisaggregationBroad == 'Sex/Age'], na.rm = T)/sum(totalEndYear, na.rm = T),1), poptotal = sum(totalEndYear, na.rm = T)) %>%
+  gather(key = 'age_group', value = 'population',4:13) %>% separate(age_group,c('Sex','Age'))   %>% group_by(origin_iso3, origin_country,bracket) %>%
+  mutate(pct = population/sum(population),Age = factor(Age, levels = c('0to4', '5to11', '12to17','18to59','60plus')), bracket = paste0(bracket,', ', addUnits(poptotal),', cov: ', coverage))
+
+
+t.dist.bracket.big.ctry.top8 <- t.dist.bracket.big.ctry %>% filter(origin_iso3 %in% c('SYR','AFG','SSD', 'MMR', 'COD','SOM','SDN','CAF')) %>% mutate(origin_country = as.character(origin_country)) %>% split(f = .$origin_country)
+
+
+pdista1 <- ggplot(data = t.dist.bracket.big.ctry.top8$`Syrian Arab Republic`,
+                aes(x = Age,
+                    y = pct,
+                    color = bracket,
+                    group = bracket)) +
+  geom_line(data = . %>% filter(Sex == 'male'), linetype = "dashed")+
+  geom_line(data = . %>% filter(Sex == 'female'), aes(y = pct * -1), linetype = "dashed")+
+  geom_point(data = . %>% filter(Sex == 'male'))+
+  geom_point(data = . %>% filter(Sex == 'female'), aes(y = pct * -1),)+
+  annotate("text", x = '0to4', y = 0.25, label = "Male")+
+  annotate("text", x =  '0to4', y = -0.25, label = "Female")+
+  coord_flip()+
+  facet_wrap(~origin_country, ncol=1)+
+  labs(y = NULL, x= NULL, fill = NULL)+
+  theme_minimal()
+
+pdista2 <- pdista1 %+% t.dist.bracket.big.ctry.top8$Afghanistan
+pdista3 <- pdista1 %+% t.dist.bracket.big.ctry.top8$`South Sudan`
+pdista4 <- pdista1 %+% t.dist.bracket.big.ctry.top8$Myanmar
+pdista5 <- pdista1 %+% t.dist.bracket.big.ctry.top8$`Democratic Republic of the Congo`
+pdista6 <- pdista1 %+% t.dist.bracket.big.ctry.top8$Somalia
+
+p.dist.bracket.big.ctry.top6 <- arrangeGrob(pdista1,pdista2,pdista3,pdista4,pdista5,pdista6 ,ncol = 2)
+
+##################### Neighboring Country ############################
+
+t.neighbor <- demref2020 %>% group_by(origin_iso3,asylum_iso3) %>%
+  summarise(coverage = round(100*sum(totalEndYear[typeOfDisaggregationBroad == 'Sex/Age'], na.rm = T)/sum(totalEndYear, na.rm = T),1), poptotal = sum(totalEndYear, na.rm = T)) %>% ungroup() %>%
+  mutate(origin_iso3 = as.character(origin_iso3), asylum_iso3 = as.character(asylum_iso3)) %>% 
+  left_join(all.neighbors %>% mutate(is.neighbor = 1), by = c('origin_iso3' = 'country_iso3', 'asylum_iso3' = 'neighbor_iso3')) %>% mutate(is.neighbor = ifelse(is.na(is.neighbor),'No','Yes'))
+
+t.neighbor.big <- t.neighbor %>% group_by(is.neighbor) %>% summarise(coverage = weighted.mean(coverage,poptotal),poptotal = sum(poptotal))
+
+p.neighbor.hist <- ggplot(data = t.neighbor.big, aes(x = is.neighbor, y = poptotal,alpha =coverage/100)) + geom_bar(stat = 'identity') + scale_alpha_continuous(name = 'dem. data cov.',range = c(0.5,1))+ theme(axis.text.x = element_text(angle =45))
+
+
+
+t.neighbor.world <- demref2020 %>% mutate_at(vars(14:40),~replace_na(.,0)) %>%
+  left_join(all.neighbors %>% mutate(is.neighbor = 1), by = c('origin_iso3' = 'country_iso3', 'asylum_iso3' = 'neighbor_iso3')) %>% mutate(is.neighbor = ifelse(is.na(is.neighbor),'No','Yes')) %>%
+  group_by(is.neighbor) %>%
+  summarise(male.0to4 = sum(male_0_4), male.5to11 = sum(male_5_11), male.12to17 = sum(male_12_17), male.18to59 = sum(male_18_59), male.60plus = sum(male_60),
+            female.0to4 = sum(female_0_4),female.5to11 = sum(female_5_11), female.12to17 = sum(female_12_17), female.18to59 = sum(female_18_59), female.60plus = sum(female_60),
+            coverage = round(100*sum(totalEndYear[typeOfDisaggregationBroad == 'Sex/Age'], na.rm = T)/sum(totalEndYear, na.rm = T),1), poptotal = sum(totalEndYear, na.rm = T)) %>%
+  gather(key = 'age_group', value = 'population',2:11) %>% separate(age_group,c('Sex','Age'))   %>% group_by(is.neighbor) %>%
+  mutate(pct = population/sum(population),Age = factor(Age, levels = c('0to4', '5to11', '12to17','18to59','60plus')), is.neighbor = paste0(is.neighbor,', ', addUnits(poptotal),', cov: ', coverage))
+
+
+
+p.neighbor.world <- ggplot(data = t.neighbor.world,
+                                   aes(x = Age,
+                                       y = pct,
+                                       color = is.neighbor,
+                                       group = is.neighbor)) +
+  geom_line(data = . %>% filter(Sex == 'male'), linetype = "dashed")+
+  geom_line(data = . %>% filter(Sex == 'female'), aes(y = pct * -1), linetype = "dashed")+
+  geom_point(data = . %>% filter(Sex == 'male'))+
+  geom_point(data = . %>% filter(Sex == 'female'), aes(y = pct * -1),)+
+  annotate("text", x = '0to4', y = 0.25, label = "Male")+
+  annotate("text", x =  '0to4', y = -0.25, label = "Female")+
+  coord_flip()+
+  labs(y = NULL, x= NULL, fill = NULL)+
+  theme_minimal()
+
+t.neighbor.ctry <- demref2020 %>% mutate_at(vars(14:40),~replace_na(.,0)) %>%
+  left_join(all.neighbors %>% mutate(is.neighbor = 1), by = c('origin_iso3' = 'country_iso3', 'asylum_iso3' = 'neighbor_iso3')) %>% mutate(is.neighbor = ifelse(is.na(is.neighbor),'No','Yes')) %>%
+  group_by(origin_iso3,origin_country, is.neighbor) %>%
+  summarise(male.0to4 = sum(male_0_4), male.5to11 = sum(male_5_11), male.12to17 = sum(male_12_17), male.18to59 = sum(male_18_59), male.60plus = sum(male_60),
+            female.0to4 = sum(female_0_4),female.5to11 = sum(female_5_11), female.12to17 = sum(female_12_17), female.18to59 = sum(female_18_59), female.60plus = sum(female_60),
+            coverage = round(100*sum(totalEndYear[typeOfDisaggregationBroad == 'Sex/Age'], na.rm = T)/sum(totalEndYear, na.rm = T),1), poptotal = sum(totalEndYear, na.rm = T)) %>%
+  gather(key = 'age_group', value = 'population',4:13) %>% separate(age_group,c('Sex','Age'))   %>% group_by(origin_iso3, origin_country, is.neighbor) %>%
+  mutate(pct = population/sum(population),Age = factor(Age, levels = c('0to4', '5to11', '12to17','18to59','60plus')), is.neighbor = paste0(is.neighbor,', ', addUnits(poptotal),', cov: ', coverage))
+
+
+t.neighbor.ctry.top8 <- t.neighbor.ctry %>% filter(origin_iso3 %in% c('SYR','AFG','SSD', 'MMR', 'COD','SOM','SDN','CAF')) %>% mutate(origin_country = as.character(origin_country)) %>% split(f = .$origin_country)
+
+
+pnghbr1 <- ggplot(data = t.neighbor.ctry.top8$`Syrian Arab Republic`,
+                  aes(x = Age,
+                      y = pct,
+                      color = is.neighbor,
+                      group = is.neighbor)) +
+  geom_line(data = . %>% filter(Sex == 'male'), linetype = "dashed")+
+  geom_line(data = . %>% filter(Sex == 'female'), aes(y = pct * -1), linetype = "dashed")+
+  geom_point(data = . %>% filter(Sex == 'male'))+
+  geom_point(data = . %>% filter(Sex == 'female'), aes(y = pct * -1),)+
+  annotate("text", x = '0to4', y = 0.25, label = "Male")+
+  annotate("text", x =  '0to4', y = -0.25, label = "Female")+
+  coord_flip()+
+  facet_wrap(~origin_country, ncol=1)+
+  labs(y = NULL, x= NULL, fill = NULL)+
+  theme_minimal()
+
+pnghbr2 <- pnghbr1 %+% t.neighbor.ctry.top8$Afghanistan
+pnghbr3 <- pnghbr1 %+% t.neighbor.ctry.top8$`South Sudan`
+pnghbr4 <- pnghbr1 %+% t.neighbor.ctry.top8$Myanmar
+pnghbr5 <- pnghbr1 %+% t.neighbor.ctry.top8$`Democratic Republic of the Congo`
+pnghbr6 <- pnghbr1 %+% t.neighbor.ctry.top8$Somalia
+
+p.neighbor.ctry.top6 <- arrangeGrob(pnghbr1,pnghbr2,pnghbr3,pnghbr4,pnghbr5,pnghbr6 ,ncol = 2)
+
+##################### Economic status ############################
+
+t.income <- demref2020 %>% group_by(origin_iso3,asylum_iso3) %>%
+  summarise(coverage = round(100*sum(totalEndYear[typeOfDisaggregationBroad == 'Sex/Age'], na.rm = T)/sum(totalEndYear, na.rm = T),1), poptotal = sum(totalEndYear, na.rm = T)) %>% ungroup() %>%
+  mutate(origin_iso3 = as.character(origin_iso3), asylum_iso3 = as.character(asylum_iso3)) %>% 
+  left_join(wb.income %>% select(iso3, wb.income.2020.orig = wb.income.2020), by = c('origin_iso3' = 'iso3')) %>%
+  left_join(wb.income %>% select(iso3, wb.income.2020.asy = wb.income.2020), by = c('asylum_iso3' = 'iso3')) %>% 
+  filter(!is.na( wb.income.2020.asy) & !is.na( wb.income.2020.orig)) %>%
+  mutate(status.change = case_when(as.integer(wb.income.2020.orig) < as.integer(wb.income.2020.asy) ~ 'Higher income lvl',
+                                   as.integer(wb.income.2020.orig) > as.integer(wb.income.2020.asy) ~ 'Lower income lvl',
+                                   as.integer(wb.income.2020.orig) == as.integer(wb.income.2020.asy) ~ 'Same income lvl'))
+
+t.income.big <- t.income %>% group_by(status.change) %>% summarise(coverage = weighted.mean(coverage,poptotal),poptotal = sum(poptotal)) %>% mutate(status.change = factor(status.change, levels = c('Higher income lvl', 'Same income lvl', 'Lower income lvl')))
+
+p.income.hist <- ggplot(data = t.income.big, aes(x = status.change, y = poptotal,alpha =coverage/100)) + geom_bar(stat = 'identity')+scale_alpha_continuous(name ='dem. data cov.',  range = c(0.5,1)) + theme(axis.text.x = element_text(angle =45))
+
+
+
+t.income.world <- demref2020 %>% mutate_at(vars(14:40),~replace_na(.,0)) %>%
+  left_join(wb.income %>% select(iso3, wb.income.2020.orig = wb.income.2020), by = c('origin_iso3' = 'iso3')) %>%
+  left_join(wb.income %>% select(iso3, wb.income.2020.asy = wb.income.2020), by = c('asylum_iso3' = 'iso3')) %>% 
+  filter(!is.na( wb.income.2020.asy) & !is.na( wb.income.2020.orig)) %>%
+  mutate(status.change = case_when(as.integer(wb.income.2020.orig) < as.integer(wb.income.2020.asy) ~ 'Higher income lvl',
+                                   as.integer(wb.income.2020.orig) > as.integer(wb.income.2020.asy) ~ 'Lower income lvl',
+                                   as.integer(wb.income.2020.orig) == as.integer(wb.income.2020.asy) ~ 'Same income lvl')) %>%
+  group_by(status.change) %>%
+  summarise(male.0to4 = sum(male_0_4), male.5to11 = sum(male_5_11), male.12to17 = sum(male_12_17), male.18to59 = sum(male_18_59), male.60plus = sum(male_60),
+            female.0to4 = sum(female_0_4),female.5to11 = sum(female_5_11), female.12to17 = sum(female_12_17), female.18to59 = sum(female_18_59), female.60plus = sum(female_60),
+            coverage = round(100*sum(totalEndYear[typeOfDisaggregationBroad == 'Sex/Age'], na.rm = T)/sum(totalEndYear, na.rm = T),1), poptotal = sum(totalEndYear, na.rm = T)) %>%
+  gather(key = 'age_group', value = 'population',2:11) %>% separate(age_group,c('Sex','Age'))   %>% group_by(status.change) %>%
+  mutate(pct = population/sum(population),Age = factor(Age, levels = c('0to4', '5to11', '12to17','18to59','60plus')), status.change = paste0(status.change,', ', addUnits(poptotal),', cov: ', coverage))
+
+
+
+p.income.world <- ggplot(data = t.income.world,
+                           aes(x = Age,
+                               y = pct,
+                               color = status.change,
+                               group = status.change)) +
+  geom_line(data = . %>% filter(Sex == 'male'), linetype = "dashed")+
+  geom_line(data = . %>% filter(Sex == 'female'), aes(y = pct * -1), linetype = "dashed")+
+  geom_point(data = . %>% filter(Sex == 'male'))+
+  geom_point(data = . %>% filter(Sex == 'female'), aes(y = pct * -1),)+
+  annotate("text", x = '0to4', y = 0.25, label = "Male")+
+  annotate("text", x =  '0to4', y = -0.25, label = "Female")+
+  coord_flip()+
+  labs(y = NULL, x= NULL, fill = NULL)+
+  theme_minimal()
+
+t.income.ctry <- demref2020 %>% mutate_at(vars(14:40),~replace_na(.,0)) %>%
+  left_join(wb.income %>% select(iso3, wb.income.2020.orig = wb.income.2020), by = c('origin_iso3' = 'iso3')) %>%
+  left_join(wb.income %>% select(iso3, wb.income.2020.asy = wb.income.2020), by = c('asylum_iso3' = 'iso3')) %>% 
+  filter(!is.na( wb.income.2020.asy) & !is.na( wb.income.2020.orig)) %>%
+  mutate(status.change = case_when(as.integer(wb.income.2020.orig) < as.integer(wb.income.2020.asy) ~ 'Higher income lvl',
+                                   as.integer(wb.income.2020.orig) > as.integer(wb.income.2020.asy) ~ 'Lower income lvl',
+                                   as.integer(wb.income.2020.orig) == as.integer(wb.income.2020.asy) ~ 'Same income lvl')) %>%
+  group_by(origin_iso3,origin_country, status.change) %>%
+  summarise(male.0to4 = sum(male_0_4), male.5to11 = sum(male_5_11), male.12to17 = sum(male_12_17), male.18to59 = sum(male_18_59), male.60plus = sum(male_60),
+            female.0to4 = sum(female_0_4),female.5to11 = sum(female_5_11), female.12to17 = sum(female_12_17), female.18to59 = sum(female_18_59), female.60plus = sum(female_60),
+            coverage = round(100*sum(totalEndYear[typeOfDisaggregationBroad == 'Sex/Age'], na.rm = T)/sum(totalEndYear, na.rm = T),1), poptotal = sum(totalEndYear, na.rm = T)) %>%
+  gather(key = 'age_group', value = 'population',4:13) %>% separate(age_group,c('Sex','Age'))   %>% group_by(origin_iso3, origin_country, status.change) %>%
+  mutate(pct = population/sum(population),Age = factor(Age, levels = c('0to4', '5to11', '12to17','18to59','60plus')), status.change = paste0(status.change,', ', addUnits(poptotal),', cov: ', coverage))
+
+
+t.income.ctry.top8 <- t.income.ctry %>% filter(origin_iso3 %in% c('SYR','AFG','SSD', 'MMR', 'COD','SOM','SDN','CAF')) %>% mutate(origin_country = as.character(origin_country)) %>% split(f = .$origin_country)
+
+
+pincome1 <- ggplot(data = t.income.ctry.top8$`Syrian Arab Republic`,
+                  aes(x = Age,
+                      y = pct,
+                      color = status.change,
+                      group = status.change)) +
+  geom_line(data = . %>% filter(Sex == 'male'), linetype = "dashed")+
+  geom_line(data = . %>% filter(Sex == 'female'), aes(y = pct * -1), linetype = "dashed")+
+  geom_point(data = . %>% filter(Sex == 'male'))+
+  geom_point(data = . %>% filter(Sex == 'female'), aes(y = pct * -1),)+
+  annotate("text", x = '0to4', y = 0.25, label = "Male")+
+  annotate("text", x =  '0to4', y = -0.25, label = "Female")+
+  coord_flip()+
+  facet_wrap(~origin_country, ncol=1)+
+  labs(y = NULL, x= NULL, fill = NULL)+
+  theme_minimal()
+
+pincome2 <- pincome1 %+% t.income.ctry.top8$Afghanistan
+pincome3 <- pincome1 %+% t.income.ctry.top8$`South Sudan`
+pincome4 <- pincome1 %+% t.income.ctry.top8$Myanmar
+pincome5 <- pincome1 %+% t.income.ctry.top8$`Democratic Republic of the Congo`
+pincome6 <- pincome1 %+% t.income.ctry.top8$Somalia
+
+p.income.ctry.top6 <- arrangeGrob(pincome1,pincome2,pincome3,pincome4,pincome5,pincome6 ,ncol = 2)
 
 
 
 
-
-
-
-
-
-
-### Create chord diagram
-# library(circlize)
-# 
-# findcolor <- function(i) {
-#   func <-colorRampPalette(c("white", "black"))
-#   color <- func(100)[i]
-#   return(color)}
-# 
-# orig.dest.region <- demref2020 %>% mutate(origin_hcr_subregion = ifelse(is.na(as.character(origin_hcr_subregion)),'NA',as.character(origin_hcr_subregion))) %>%
-#   group_by(orig.region = origin_hcr_subregion,dest.region = asylum_hcr_subregion) %>%
-#   summarize(pop.mig = sum(totalEndYear)/1000,coverage = round(100*sum(totalEndYear[typeOfDisaggregationBroad == 'Sex/Age'], na.rm = T)/sum(totalEndYear, na.rm = T),1)) %>%
-#   arrange(desc(pop.mig)) %>% ungroup() %>% select(-coverage)
-# orig.dest.color <- demref2020 %>% mutate(origin_hcr_subregion = ifelse(is.na(as.character(origin_hcr_subregion)),'NA',as.character(origin_hcr_subregion))) %>%
-#   group_by(orig.region = origin_hcr_subregion,dest.region = asylum_hcr_subregion) %>%
-#   summarize(pop.mig = sum(totalEndYear)/1000,coverage = findcolor(round(100*sum(totalEndYear[typeOfDisaggregationBroad == 'Sex/Age'], na.rm = T)/sum(totalEndYear, na.rm = T),1))) %>%
-#   arrange(desc(pop.mig)) %>% ungroup() %>% pull(coverage)
-# 
-# circos.clear()
-# circos.par(start.degree = 90, canvas.ylim = c(-1.1,1.1), gap.degree = 4, track.margin = c(-0.1, 0.1), points.overflow.warning = FALSE)
-# par(mar = rep(1, 4))
-# 
-# # color palette
-# # colfunc <- colorRampPalette(c('#0083CF', "white"))
-# # 
-# # mycolor <- colfunc(length(concerned_ctries)+6)
-# #mycolor <- mycolor[sample(1:(length(concerned_ctries)+6))]
-# 
-# # Base plot
-# chordDiagram(
-#   x = orig.dest.region , 
-#   grid.col = 'grey',
-#   col = orig.dest.color,
-#   directional = 1,
-#   direction.type = c("arrows", "diffHeight"), 
-#   diffHeight  = -0.04,
-#   annotationTrack = "grid", 
-#   annotationTrackHeight = c(0.05, 0.1),
-#   link.arr.type = "big.arrow", 
-#   link.sort = TRUE, 
-#   link.largest.ontop = TRUE)
-# 
-# circos.trackPlotRegion(
-#   track.index = 1, 
-#   bg.border = NA, 
-#   panel.fun = function(x, y) {
-#     
-#     xlim = get.cell.meta.data("xlim")
-#     sector.index = get.cell.meta.data("sector.index")
-#     
-#     # Add names to the sector. 
-#     circos.text(
-#       x = mean(xlim), 
-#       y = 4, 
-#       labels = sector.index, 
-#       facing = "downward",
-#       niceFacing = T,
-#       cex = 0.7
-#     )
-#     
-#     # Add graduation on axis
-#     circos.axis(
-#       h = "top", 
-#       major.at = NULL,
-#       minor.ticks = 1, 
-#       major.tick.percentage = 0.5,
-#       labels.niceFacing = TRUE,
-#       labels.cex = 0.5)
-#   }
-# )
-
-
-
-# 
-# 
-# demref2020 <- demref2020 %>%
-#   group_by(asylum_main_office_short, `asylum_Region Name`, `asylum_Sub-region Name`, asylum, asylum_iso3, asylum_country, 
-#            origin, origin_iso3, origin_country) %>%
-#   summarise_at(vars(female_0_4:unhcrAssistedEndYear), ~sum(., na.rm = T)) %>%
-#   ungroup() %>%
-#   mutate(agecov_1859 = rowSums(select(., female_0_4, female_5_11, female_12_17, female_18_59, female_60,
-#                                male_0_4, male_5_11, male_12_17, male_18_59, male_60), na.rm = T ))
-#   
 
 
 ### delete
