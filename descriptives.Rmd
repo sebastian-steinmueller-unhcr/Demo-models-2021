@@ -1,6 +1,6 @@
 ---
 title: "Modelling the demographic distribution of the global refugee population"
-author: "Sebastian Steinmueller (UNHCR)"
+author: "Jan Beise, Yukun Pei (UNICEF), Sebastian Steinmueller (UNHCR)"
 date: 'Version: `r Sys.Date()`'
 output:
   bookdown::html_document2: 
@@ -53,7 +53,11 @@ demref2020 %>%
 ## Distribution of missing and observed demographic data
 
 ```{r typeOfDisaggregation, echo=F}
-t.typeOfDisaggregation %>% select(typeOfDisaggregation, totalEndYear, freq.totalEndYear, nAsylum, freq.asylum) %>% kable(format = 'html', caption =  "Demographic breakdown of UNHCR refugee population end 2020") %>% kable_styling()
+t.typeOfDisaggregation %>% 
+  mutate(`Percentage of population` = freq.totalEndYear*100,
+         `Percentage of countries of asylum`= freq.asylum*100) %>%
+  select(typeOfDisaggregation, totalEndYear, `Percentage of population`, nAsylum, `Percentage of countries of asylum`) %>%
+kable(format = 'html', caption =  "Demographic data availability for UNHCR refugee population end 2020") %>% kable_styling()
 ``` 
 
 Table \@ref(tab:typeOfDisaggregation) shows the availability of sex/age-disaggregated data by the global number of refugees and countries of asylum. Age- and sex-disaggregated data is available for `r round(sum(t.typeOfDisaggregation[t.typeOfDisaggregation$typeOfDisaggregation %in% c("Sex/Age broad", "Sex/Age fine"),]$freq.totalEndYear)*100,0)` per cent of the global refugee population and data disaggregated only by sex for a further `r round(t.typeOfDisaggregation[t.typeOfDisaggregation$typeOfDisaggregation %in% c("Sex"),]$freq.totalEndYear*100,0)` per cent.  
@@ -80,8 +84,8 @@ Statelessness and the urban/rural variable are other variables for which we coul
 Some questions we are particularly interested in answering through the following descriptive analysis:  
 
 1. Can we assume that the sex/age distribution in the population with missing data is the same as in the population with available data?  
-2. Is origin country a predictor of the demographic composition of refugee populations, even if they live in different countries of asylum?  
-3. Is country of asylum a predictor of the demographic composition of refugee populations, even if they come from different countries of origin?  
+2. Is the demographic composition of refugee populations from the same country of origin similar in different countries of asylum?  
+3. Is the demographic composition of refugee populations in the same country of asylum similar over different countries of origin?  
 4. Are refugee populations from the same country of origin similar to each other in neighbouring countries of asylum and in countries in the same region?  
 5. Does the demographic distribution of a population from the same origin vary significantly across locations within the same country of asylum?  
 
@@ -106,7 +110,112 @@ p.typeOfDissaggregationBroad.asyregionhcr
 
 Figure \@ref(fig:ptypeOfDissaggregationBroadasyregionhcr)) shows for what proportion of the refugee population living in each region sex- and sex/age-disaggregated data was available at the end of 2020. While demographic coverage is close to universal for refugees hosted in the Sub-Saharan Africa and the MENA regions, it is available for `r round(t.typeOfDissaggregationBroad.asyregionhcr[t.typeOfDissaggregationBroad.asyregionhcr$typeOfDisaggregationBroad %in% c("Sex/Age")&t.typeOfDissaggregationBroad.asyregionhcr$asylum_hcr_region %in% c("Europe"),]$freq.totalEndYear*100,0)` per cent of refugees in Europe, `r round(t.typeOfDissaggregationBroad.asyregionhcr[t.typeOfDissaggregationBroad.asyregionhcr$typeOfDisaggregationBroad %in% c("Sex/Age")&t.typeOfDissaggregationBroad.asyregionhcr$asylum_hcr_region %in% c("Asia and the Pacific"),]$freq.totalEndYear*100,0)` per cent in Asia and the Pacific and only for `r round(t.typeOfDissaggregationBroad.asyregionhcr[t.typeOfDissaggregationBroad.asyregionhcr$typeOfDisaggregationBroad %in% c("Sex/Age")&t.typeOfDissaggregationBroad.asyregionhcr$asylum_hcr_region %in% c("Americas"),]$freq.totalEndYear*100,0)` per cent in the Americas. This is to a large extent a result of the differing population data sources in these regions: While the individual demographic details of refugees in many countries in Africa and MENA are recorded in UNHCR's own case registration system proGres, population data in other regions often comes from government offices with varying degrees of availability of demographic data. 
 
-## Chord diagram for refugee flow within unhcr subregion, transparency related to the data coverage  
+
+
+## Data coverage histogram  
+
+```{r pcoverageDistributionasy, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Data coverage by country of asylum"}
+p.coverageDistribution.asy
+``` 
+
+Figure \@ref(fig:pcoverageDistributionasy)) shows the distribution of the number of countries of asylum according to the demographic coverage. It clearly demonstrates that for almost all countries, the demographic coverage is either 0 per cent (left bar), or 100 per cent (right bar). This is to be expected since for most countries of asylum, demographic data will be produced by the same source, e.g. by a government office or by UNHCR, with the same demographic coverage for all refugee populations regardless of country of origin. 
+
+
+```{r pcoverageDistributionori, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Data coverage by country of origin"}
+p.coverageDistribution.ori
+```
+  
+Figure \@ref(fig:pcoverageDistributionori)) in turn shows the distribution of the number of countries origin according to the demographic coverage. The large bar on the left for example stands for the number of countries of origin for which there is no demographic data on their refugees at all. While this is the case for populations from a lot of origin countries, there are also many origin populations for which there are varying degrees of data availability. This can be explained by their dispersion over different countries of asylum with differing data availability in each of them. 
+  
+## Demographic distribution from selected countries of origin
+
+
+```{r pageSexCompSameOritop6, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Age and sex composition from same origin country and different asylum countries (Top 6 origin countries)"}
+plot(p.ageSexCompSameOri.top6)
+
+```  
+
+Figure 7 shows the age/sex distribution from select countries of origin over different countries of asylum. To avoid bias from incomplete data, we only look at origin-destination pairs with full or almost full demographic data coverage (see "cov x" behind the asylum_iso3 name, where x is the percentage of the population with available sex/age data). The demographic composition of refugee populations from the same country of origin varies considerably over different countries of asylum. For refugees from Somalia for example, the percentage of the 18-59 age group in South Africa is 50% higher than in Ethiopia, and there are pronounced sex imbalances over countries of asylum for the same origin population: While the demographics of the Rohingya populations displaced from Myanmar in Bangladesh, India and Nepal are broadly comparable, in Malaysia, 80 per cent of adult registered Rohingya are male, and the proportion of children (25 per cent) is much lower. Possible reasons for this imbalance include the lack of safe, affordable and regular pathways for displaced Rohingya to reach Malaysia, making it more likely for men to undertake the journey. Looking at the origin populations in detail, there seems to be a trend for populations in further away and higher income countries of asylum to be more male and more adult on average. 
+This gives us a valuable check of assumptions for later modelling approaches: Returning to our question 2, we cannot simply assume that populations from the same country of origin are very similar in their demographic composition over different countries of asylum.
+
+
+## Demographic distribution in selected countries of asylum
+
+
+  
+```{r pageSexCompSameAsytop6, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Age and sex composition from same asylum country and different origin countries (Top 6 asylum countries)"}
+plot(p.ageSexCompSameAsy.top6)
+
+```  
+
+Figure 8 shows that from the perspective of asylum country, the situation is more complicated. Out of the eight biggest receiving countries, three (Turkey, Pakistan and Bangladesh) host refugee populations from only a single country of origin. The rest of the refugee populations either have <50% data coverage or less than 1000 total population. Even for the rest of asylum countries that have populations from multiple countries of origin, the demographic compositions still differs among different origins. In Sudan as country of asylum for example, refugees from the Central African Republic are much more younger than  refugees from Ethiopia, with the percentage of 18-59 age group 35% lower. This gives an indication for question 3 above: in the same country of asylum, the age/sex composition varies a lot over different countries of asylum.
+
+
+## Compare refugee population's age distribution with origin and asylum country's age distribution
+```{r pageDistribution, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Compare demographic distribution from selected countries"}
+p.ageDistribution
+```  
+
+## Marginal analysis on Distance, Neighboring country, Economic status
+In the meeting we discussed that distance between origin and destination countries, whether origin and destination are neighboring country, and the economic status between origin and destination countries may be the factor that could explain the variance. Below I will analyse how these three factors may influence the demographic composition of refugees.  
+
+### Distance
+Distances are calculated between centroids of countries, measured by meter.
+```{r pdistpoint, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Total population and data coverage by distance"}
+p.dist.point
+```  
+
+```{r pdisthist, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Total population and data coverage by distance, in brackets"}
+p.dist.hist
+```  
+From \@ref(fig:pdistpoint) and \@ref(fig:pdisthist) we can see, the total population of refugee decreases when the distance between origin and asylum countries become further. The demographic data coverage of distant refugee movements are also getting lower.
+```{r pdistbracketbigworld, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Age and sex composition grouped by travel distance, world"}
+p.dist.bracket.big.world
+
+```  
+\@ref(fig:pdistbracketbigworld) shows that the demographic composition of refugees moving within 1000 Km and moving 1000 Km - 5000 Km are close. We can see a big difference in demographic composition for refugees moving more than 5000 Km, where those refugees are older and their gender is more male-dominant. But the low data coverage for this distance bracket casts a shadow on the inference.
+```{r pdistbracketbigctrytop6, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Age and sex composition grouped by travel distance, Top 6 origin countries"}
+plot(p.dist.bracket.big.ctry.top6)
+
+```  
+When zooming into country-level data, \@ref(fig:pdistbracketbigctrytop6) shows that except for South Sudan and Dem. Rep. Congo, most countries have a trend that the refugees tends to be older and male-biased when traveling further, by comparing <1000Km group and 1000-5000Km group. All 6 countries have low demographic data coverage for >5000Km group.  
+To conclude, generally speaking, the distance between origin and destination countries may be a factor that impacts demographic composition of refugees, but for some countries (mostly Sub-Saharan African countries) this might not be true. Also, the data coverage for refugees with longer travel distance are low.  
+
+### Neighboring Country
+The countries that sharing a piece of border is defined as neighboring country.
+
+```{r pneighborhist, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Total population and data coverage by if the origin and destination countries are neighbors"}
+p.neighbor.hist
+```   
+From \@ref(fig:pneighborhist) we can see, same as the distance criteria, the neighboring country criteria still has the low data coverage issue. 27 per cent of refugees are traveling to countries of asylum not neighboring their home country while the demographic data for this population is only about 36%.  
+```{r pneighborworld, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Age and sex composition grouped by neighboring status, world"}
+p.neighbor.world
+```  
+
+```{r pneighborctrytop6, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Age and sex composition grouped by neighboring status, top 6 origin countries"}
+plot(p.neighbor.ctry.top6)
+```  
+Above plot shows that for the top 6 origin countries of refugees, with high data coverage, When going to non-neighboring countries, the proportion of adult male will increase significantly. This may  due to the high cost of time and effort required to travel to non-neighboring countries.  
+
+### Economic status  
+Here every origin and destination country is assigned with World Bank income class classification, with 4 levels: Low income, Lower middle income, Upper middle income, and High income. So if a refugee traveling from a lower income level country to a higher income level country, then he is marked by '(he/she is traveling to a) Higher income lvl' in column 'status.change' and vice versa.
+```{r pincomehist, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Total population and data coverage by the origin and destination countries' income level"}
+p.income.hist
+```   
+From above plot we can see that majority of refugees are traveling to an asylum country that has a same or higher income level than his/her original country. Surprisingly, the demographic data coverage is high among all three situations, making it a potential good predictor.  
+```{r pjincomeworld, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Age and sex composition grouped by the origin and destination countries' income level, world"}
+p.income.world
+```  
+On world level, the refugees traveling to higher income level countries tends to be older and more male-dominant.  
+```{r pneighborctry, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Age and sex composition grouped by neighboring status, top 6 origin country"}
+plot(p.income.ctry.top6)
+```  
+Looking at top 6 origin countries of refugee, the situation varies. For South Sudan, Myanmar, and Dem. Rep. Congo, it's similar to the global situation. For country like SAR and Afghanistan, the demographic composition of refugees that traveling to higher income level countries are quite the same. Somalia is an outlier where there are more males when traveling to countries with same income level as Somalia rather than higher.
+
+
+
+
+## Chord diagram for origin-asylum subregion pair of refugee stocks in 2020, transparency according to demographic data coverage  
 ```{r pchorddiagram, message=F, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Chord diagram"}
 library(circlize)
 
@@ -177,118 +286,6 @@ circos.trackPlotRegion(
   }
 )
 ``` 
-
-
-## Data coverage histogram  
-
-```{r pcoverageDistributionasy, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Data coverage histogram by country of asylum"}
-p.coverageDistribution.asy
-``` 
-
-```{r pcoverageDistributionori, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Data coverage histogram by country of origin"}
-p.coverageDistribution.ori
-```
-  
-The two figures above have shown drastic difference of distribution of data coverage between country of asylum and country of origin. When counted by country of asylum, the coverage is polarized, that is, for a single country of asylum, either the Sex/Age coverage is 0 or 100, while when counted by country of origin, the coverage numbers spread over 0 to 100 and concentrate on 0 side
-
-## Demographic distribution from selected countries of origin
-```{r ptotalEndYearoriasyreghcr, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Demographic disaggregation coverage from selected countries of origin"}
-p.totalEndYear.ori.asyreghcr
-
-```  
-Figure \@ref(fig:ptotalEndYearoriasyreghcr) shows the refugee population whose countries of origin is near Europe, Americas and Asia & Pacific bear the biggest missing of demographic data.  
-```{r pdemCompSameOritop8, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Demographic composition from same origin country and different asylum countries (Top 8 origin countries)"}
-plot(p.demCompSameOri.top8)
-
-```  
-Figure \@ref(fig:pdemCompSameOritop8) shows that even from same origin country, the demographic composition may vary among different destinations. The most drastic situation is spotted in Somalia, where the refugees to South Africa are much more older than the refugees to Ethiopia, with the percentage of 18-59 age group 50% higher. This answers the question 2 above, that origin country may not be a good predictor of demographic composition.  
-```{r pageSexCompSameOritop6, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Age and sex composition from same origin country and different asylum countries (Top 6 origin countries)"}
-plot(p.ageSexCompSameOri.top6)
-
-```  
-
-
-
-## Demographic distribution in selected countries of asylum
-```{r ptotalEndYearasyorireghcr, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Demographic disaggregation coverage from selected countries of origin"}
-p.totalEndYear.asy.orireghcr
-```  
-Figure \@ref(fig:ptotalEndYearasyorireghcr) shows that all of the top 8 asylum countries has nearly 100% demographic data. Even Germany is an european country.
-```{r pdemCompSameAsytop8, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Demographic composition from same asylum country and different origin countries (Top 8 asylum countries)"}
-plot(p.demCompSameAsy.top8)
-
-```  
-Figure \@ref(fig:pdemCompSameOritop8) shows that from the perspective of asylum country, the situation is more complicated. Out of the 8 biggest receiving countries, 3 (Turkey, Pakistan and Bangladesh) only have single source of inflow. The rest of the refugee inflows either have <50% data coverage or less than 1000 total population. Even for the rest of asylum countries that have multiple inflows, the demographic compositions still differ among different origins. The most drastic situation is spotted in Sudan, where the refugees from Central African Republic are much more younger than the refugees from Ethiopia, with the percentage of 18-59 age group 35% lower. This answers the question 3 above, that origin country may not be a good predictor of demographic composition.
-  
-```{r pageSexCompSameAsytop6, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Age and sex composition from same asylum country and different origin countries (Top 6 asylum countries)"}
-plot(p.ageSexCompSameAsy.top6)
-
-```  
-
-## Compare refugee population's age distribution with origin and asylum country's age distribution
-```{r pageDistribution, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Compare demographic distribution from selected countries"}
-p.ageDistribution
-```  
-
-## Marginal analysis on Distance, Neighboring country, Economic status
-In the meeting we discussed that distance between origin and destination countries, whether origin and destination are neighboring country, and the economic status between origin and destination countries may be the factor that could explain the variance. Below I will analyse how these three factors may influence the demographic composition of refugees.  
-
-### Distance
-Distances are calculated between centroids of countries, measured by meter.
-```{r pdistpoint, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Total population and data coverage by distance"}
-p.dist.point
-```  
-
-```{r pdisthist, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Total population and data coverage by distance, in brackets"}
-p.dist.hist
-```  
-From \@ref(fig:pdistpoint) and \@ref(fig:pdisthist) we can see, the total population of refugee decreases when the distance between origin and asylum countries become further. The demographic data coverage of distant refugee movements are also getting lower.
-```{r pdistbracketbigworld, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Age and sex composition grouped by travel distance, world"}
-p.dist.bracket.big.world
-
-```  
-\@ref(fig:pdistbracketbigworld) shows that the demographic composition of refugees moving within 1000 Km and moving 1000 Km - 5000 Km are close. We can see a big difference in demographic composition for refugees moving more than 5000 Km, where those refugees are older and their gender is more male-dominant. But the low data coverage for this distance bracket casts a shadow on the inference.
-```{r pdistbracketbigctrytop6, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Age and sex composition grouped by travel distance, Top 6 origin countries"}
-plot(p.dist.bracket.big.ctry.top6)
-
-```  
-When zooming into country-level data, \@ref(fig:pdistbracketbigctrytop6) shows that except for South Sudan and Dem. Rep. Congo, most countries have a trend that the refugees tends to be older and male-biased when traveling further, by comparing <1000Km group and 1000-5000Km group. All 6 countries have low demographic data coverage for >5000Km group.  
-To conclude, generally speaking, the distance between origin and destination countries may be a factor that impacts demographic composition of refugees, but for some countries (mostly Sub-Saharan African countries) this might not be true. Also, the data coverage for refugees with longer travel distance are low.  
-
-### Neighboring Country
-The countries that sharing a piece of border is defined as neighboring country.
-
-```{r pneighborhist, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Total population and data coverage by if the origin and destination countries are neighbors"}
-p.neighbor.hist
-```   
-From \@ref(fig:pneighborhist) we can see, same as the distance criteria, the neighboring country criteria still has the low data coverage issue. 27 per cent of refugees are traveling to countries of asylum not neighboring their home country while the demographic data for this population is only about 36%.  
-```{r pneighborworld, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Age and sex composition grouped by neighboring status, world"}
-p.neighbor.world
-```  
-
-```{r pneighborctrytop6, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Age and sex composition grouped by neighboring status, top 6 origin countries"}
-plot(p.neighbor.ctry.top6)
-```  
-Above plot shows that for the top 6 origin countries of refugees, with high data coverage, When going to non-neighboring countries, the proportion of adult male will increase significantly. This may  due to the high cost of time and effort required to travel to non-neighboring countries.  
-
-### Economic status  
-Here every origin and destination country is assigned with World Bank income class classification, with 4 levels: Low income, Lower middle income, Upper middle income, and High income. So if a refugee traveling from a lower income level country to a higher income level country, then he is marked by '(he/she is traveling to a) Higher income lvl' in column 'status.change' and vice versa.
-```{r pincomehist, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Total population and data coverage by the origin and destination countries' income level"}
-p.income.hist
-```   
-From above plot we can see that majority of refugees are traveling to an asylum country that has a same or higher income level than his/her original country. Surprisingly, the demographic data coverage is high among all three situations, making it a potential good predictor.  
-```{r pjincomeworld, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Age and sex composition grouped by the origin and destination countries' income level, world"}
-p.income.world
-```  
-On world level, the refugees traveling to higher income level countries tends to be older and more male-dominant.  
-```{r pneighborctry, fig.height = 7, fig.width = 15, fig.align='center', echo=F, fig.cap="Age and sex composition grouped by neighboring status, top 6 origin country"}
-plot(p.income.ctry.top6)
-```  
-Looking at top 6 origin countries of refugee, the situation varies. For South Sudan, Myanmar, and Dem. Rep. Congo, it's similar to the global situation. For country like SAR and Afghanistan, the demographic composition of refugees that traveling to higher income level countries are quite the same. Somalia is an outlier where there are more males when traveling to countries with same income level as Somalia rather than higher.
-
-
-
-
 
 
 
