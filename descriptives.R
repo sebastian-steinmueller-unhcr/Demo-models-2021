@@ -1047,6 +1047,96 @@ p.income.ctry.top6 <- arrangeGrob(pincome1,pincome2,pincome3,pincome4,pincome5,p
 
 
 
+##################### Intra- vs inter-country of asylum variance of demographics ############################
+
+### check whether there is significant variation on sub-national level in same origin population
+
+## example Afghanistan origin with complete country of asylum data only
+
+
+demref2020.oriAfg.compl <- demref2020 %>%
+  filter(origin_iso3 == "AFG", typeOfDisaggregationBroad == "Sex/Age" ) %>%
+  mutate(femaleProp = female / totalEndYear,
+         childrenProp = children / totalEndYear)
+  
+# what are good measures of variance? a) % female, b) % children
+
+# inter-country variation
+
+t.oriAfg.asy.compl <- demref2020.oriAfg.compl %>%
+  group_by(asylum_iso3, asylum_country) %>%
+  summarise(totalEndYear = sum(totalEndYear),
+            female = sum(female),
+            children = sum(children)) %>%
+  mutate(femaleProp = female / totalEndYear,
+         childrenProp = children / totalEndYear)
+
+sd(t.oriAfg.asy.compl$femaleProp) # 0.23
+sd(t.oriAfg.asy.compl$childrenProp) # 0.20
+
+# mean intra-country variation
+t.oriAfg.asy.var <- demref2020.oriAfg.compl %>%
+  group_by(asylum_iso3) %>%
+  summarise(femalePropSD = sd(femaleProp),
+            childrenPropSD = sd(childrenProp),
+            totalEndYear = sum(totalEndYear))
+
+mean(t.oriAfg.asy.var$femalePropSD, na.rm = T) # 0.20
+mean(t.oriAfg.asy.var$childrenPropSD, na.rm = T) # 0.16
+weighted.mean(t.oriAfg.asy.var$femalePropSD, w = t.oriAfg.asy.var$totalEndYear, na.rm = T) # 0.20
+weighted.mean(t.oriAfg.asy.var$childrenPropSD, w = t.oriAfg.asy.var$totalEndYear, na.rm = T) # 0.16
+
+
+ View(demref2020.oriAfg.compl %>% filter(asylum == "PAK") %>% 
+       select(location, urbanRural, accommodationType, femaleProp, childrenProp, totalEndYear))
+
+
+## example Syria origin with complete country of asylum data only
+
+
+demref2020.oriSyr.compl <- demref2020 %>%
+  filter(origin_iso3 == "SYR", typeOfDisaggregationBroad == "Sex/Age" ) %>%
+  mutate(femaleProp = female / totalEndYear,
+         childrenProp = children / totalEndYear)
+
+
+# inter-country variation
+
+t.oriSyr.asy.compl <- demref2020.oriSyr.compl %>%
+  group_by(asylum_iso3, asylum_country) %>%
+  summarise(totalEndYear = sum(totalEndYear),
+            female = sum(female),
+            children = sum(children)) %>%
+  mutate(femaleProp = female / totalEndYear,
+         childrenProp = children / totalEndYear)
+
+sd(t.oriSyr.asy.compl$femaleProp) # 0.21
+sd(t.oriSyr.asy.compl$childrenProp) # 0.19
+
+# mean intra-country variation
+t.oriSyr.asy.var <- demref2020.oriSyr.compl %>%
+  group_by(asylum_iso3) %>%
+  summarise(femalePropSD = sd(femaleProp),
+            childrenPropSD = sd(childrenProp),
+            totalEndYear = sum(totalEndYear))
+
+mean(t.oriSyr.asy.var$femalePropSD, na.rm = T) # 0.17
+mean(t.oriSyr.asy.var$childrenPropSD, na.rm = T) # 0.15
+
+weighted.mean(t.oriSyr.asy.var$femalePropSD, w = t.oriSyr.asy.var$totalEndYear, na.rm = T) # 0.17
+weighted.mean(t.oriSyr.asy.var$childrenPropSD,w = t.oriSyr.asy.var$totalEndYear, na.rm = T) # 0.15
+
+
+# View(demref2020.oriSyr.compl %>% filter(asylum == "ARE") %>% 
+#       select(location, urbanRural, accommodationType, femaleProp, childrenProp, totalEndYear))
+
+
+
+
+
+
+
+
 
 
 
