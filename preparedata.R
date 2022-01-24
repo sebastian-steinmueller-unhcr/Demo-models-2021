@@ -55,7 +55,7 @@ dem <-  dem %>%
     typeOfDisaggregation == "Sex" ~ "Sex",
     typeOfDisaggregation == "None" ~ "None"
     ),
-    index = seq(1:n())
+  index = seq(1:n())
   )
 
 
@@ -240,7 +240,7 @@ table(demref2020$typeOfDisaggregation, demref2020$typeOfDisaggregationBroad)
 # 4) replace original counts with new counts
 
 ## female unknowns
-`
+
 dhondt_female <- demref2020  %>% 
   filter(typeOfDisaggregationBroad == "Sex/Age" & (femaleAgeUnknown>0))  %>% 
   select(index, female_0_4:femaleAgeUnknown, typeOfDisaggregation)
@@ -349,25 +349,48 @@ demref2020 <- demref2020 %>%
     male_children = rowSums(select(., male_0_4, male_5_11, male_12_17), na.rm = T),
     male_adults = rowSums(select(.,male_18_59, male_60), na.rm = T)
   ) %>%
+  mutate(typeOfDisaggregationAge = case_when(
+    typeOfDisaggregationBroad == "Sex/Age" ~ "Age",
+    typeOfDisaggregationBroad == "Sex" ~ "None",
+    typeOfDisaggregationBroad == "None" ~ "None"
+    ),
+    typeOfDisaggregationSex = case_when(
+    typeOfDisaggregationBroad == "Sex/Age" ~ "Sex",
+    typeOfDisaggregationBroad == "Sex" ~ "Sex",
+    typeOfDisaggregationBroad == "None" ~ "None"
+    )
+  ) %>%
   mutate(
     typeOfDisaggregation = as.factor(typeOfDisaggregation),
     typeOfDisaggregationBroad = as.factor(typeOfDisaggregationBroad),
+    typeOfDisaggregationAge = as.factor(typeOfDisaggregationAge),
+    typeOfDisaggregationSex = as.factor(typeOfDisaggregationSex),
     urbanRural = as.factor(urbanRural),
     accommodationType = as.factor(accommodationType),
     populationType = as.factor(populationType),
     statelessStatus = as.factor(statelessStatus),
-    populationTypeName = as.factor(populationTypeName)
+    populationTypeName = as.factor(populationTypeName),
   ) %>%
   select(index, year, asylum:populationPlanningGroup, populationTypeName, 
          female_0_4:femaleAgeUnknown, female_children, female_adults, female, 
          male_0_4:maleAgeUnknown, male_children, male_adults, male, children, adults,
          totalEndYear, unhcrAssistedEndYear,
-         typeOfDisaggregation, typeOfDisaggregationBroad, 
+         typeOfDisaggregation, typeOfDisaggregationBroad, typeOfDisaggregationAge, typeOfDisaggregationSex,
          asylum_iso3:`origin_Developed / Developing Countries`)
   
 dim(demref2020)
 
-`
+demref2020.ori.asy.age <- demref2020 %>%
+  group_by(asylum_main_office_short, `asylum_Region Name`, `asylum_Sub-region Name`, asylum, asylum_iso3, asylum_country, 
+           origin_main_office_short, `origin_Region Name`, `origin_Sub-region Name`, origin, origin_iso3, origin_country,
+           typeOfDisaggregationAge) %>%
+  summarise_at(vars(female_0_4:unhcrAssistedEndYear), ~sum(., na.rm = T)) %>%
+  ungroup() %>%
+  mutate(agecov_1859 = rowSums(select(., female_0_4, female_5_11, female_12_17, female_18_59, female_60,
+                                      male_0_4, male_5_11, male_12_17, male_18_59, male_60), na.rm = T ))
+
+
+
 
 
 ##### III. write file for descriptive analysis and models ########## 
@@ -379,7 +402,7 @@ origin_countries <- countries %>%
 asylum_countries <- countries %>%
   rename_all( ~ paste0("asylum_", .))
 
-save(demref2020,  origin_countries, asylum_countries, file = "data/demref2020.RData")
+save(demref2020, demref2020.ori.asy.age,  origin_countries, asylum_countries, file = "data/demref2020.RData")
 # save(demasy2020,  origin_countries, asylum_countries, file = "demasy2020.RData")
 
 ############################################ END ###########################################################
