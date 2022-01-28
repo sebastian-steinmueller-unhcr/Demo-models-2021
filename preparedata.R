@@ -119,16 +119,11 @@ t.dem.check1859.male <- dem.check1859 %>%
 dem <- dem %>% 
   filter(!is.na(totalEndYear) & totalEndYear != 0) %>%  # check with DAS unit why so many NA values here
 #  mutate(typeOfDisaggregation = if_else(is.na(typeOfDisaggregation), "None", typeOfDisaggregation)) %>%
-  mutate(typeOfDisaggregationBroad = case_when(
-    typeOfDisaggregation == "Sex/Age fine" | typeOfDisaggregation == "Sex/Age broad" ~ "Sex/Age",
-    typeOfDisaggregation == "Sex" ~ "Sex",
-    typeOfDisaggregation == "None" ~ "None"
-  ),
-  female_18_59 = case_when(
+  mutate(female_18_59 = case_when(
     typeOfDisaggregation == "Sex/Age fine" ~ rowSums(select(., female_18_24, female_25_49, female_50_59), na.rm = T),
     typeOfDisaggregation != "Sex/Age fine" ~ female_18_59,
     ),
-  male_18_59 = case_when(
+    male_18_59 = case_when(
     typeOfDisaggregation == "Sex/Age fine" ~ rowSums(select(., male_18_24, male_25_49, male_50_59), na.rm = T),
     typeOfDisaggregation != "Sex/Age fine" ~ male_18_59,
     )
@@ -380,11 +375,30 @@ demref2020 <- demref2020 %>%
   
 dim(demref2020)
 
+## check NAs and 0s
+
+t.checkna0 <- demref2020 %>% 
+  mutate(
+    femaleAgeUnknownNA = case_when(
+      femaleAgeUnknown == 0 ~ "0",
+      is.na(femaleAgeUnknown) ~ "NA",
+      !is.na(femaleAgeUnknown) & femaleAgeUnknown != 0 ~ ">0"
+    ), 
+    maleAgeUnknownNA = case_when(
+      maleAgeUnknown == 0 ~ "0",
+      is.na(maleAgeUnknown) ~ "NA",
+      !is.na(maleAgeUnknown) & maleAgeUnknown != 0 ~ ">0"
+    )
+  ) %>% 
+  group_by(typeOfDisaggregation, femaleAgeUnknownNA) %>% 
+  summarise(nrowsFemaleUnknown = n())
+
+
 demref2020.ori.asy.age <- demref2020 %>%
   group_by(asylum_main_office_short, `asylum_Region Name`, `asylum_Sub-region Name`, asylum, asylum_iso3, asylum_country, 
            origin_main_office_short, `origin_Region Name`, `origin_Sub-region Name`, origin, origin_iso3, origin_country,
            typeOfDisaggregationAge) %>%
-  summarise_at(vars(female_0_4:unhcrAssistedEndYear), ~sum(., na.rm = T)) %>%
+  summarise_at(vars(female_0_4:unhcrAssistedEndYear), ~sum(., na.rm = F)) %>%
   ungroup() %>%
   mutate(agecov_1859 = rowSums(select(., female_0_4, female_5_11, female_12_17, female_18_59, female_60,
                                       male_0_4, male_5_11, male_12_17, male_18_59, male_60), na.rm = T ))
