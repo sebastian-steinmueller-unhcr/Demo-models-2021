@@ -1,4 +1,13 @@
 
+### function invlogit ###
+### calculates inverse logit to bring binomial default link to probability
+
+### begin function invlogit
+invlogit <- function(x){exp(x)/(1+exp(x))}
+### end function invlogit
+
+
+
 
 ### funcion dis ###
 ### display integers in comma notation
@@ -6,6 +15,8 @@
 ### begin function dis
 dis <- function(x){format(round(as.numeric(x), 1),  big.mark=",")}
 ### end function dis
+
+
 
 
 ### function insertRows
@@ -24,6 +35,7 @@ insertRows <- function(existingDF, newrows, r) {
   existingDF
 }
 #end function insertRows
+
 
 
 

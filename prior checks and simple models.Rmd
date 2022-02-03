@@ -1,0 +1,55 @@
+---
+title: "Prior checks and simple models for refugee demographics"
+author: "Jan Beise, Yukun Pei (UNICEF), Sebastian Steinmueller (UNHCR)"
+date: 'Version: `r Sys.Date()`'
+output:
+  bookdown::html_document2: 
+    df_print: paged
+    number_sections: false 
+---
+
+
+
+
+
+
+# Model 0: Proportion of children in fixed intercept model
+
+## Model
+
+
+We want to predict the number of Afghan refugee children y given the known and fixed number of refugees n in a country of asylum and the to be estimated proportion of children $\theta$. We will use the countries of asylum with available demographic data to estimate the posterior distribution of the proportion of children. For the countries with fully available demographic data, we do not need to predict y - this is assumed to be fixed and measured without error. For the countries without demographic data, we will predict y from the posterior distribution. 
+
+We can estimate $\theta$ in a binomial model.
+
+Likelihood:
+$$p(y|n,\theta) = {n \choose y} \theta^{y} (1-\theta)^{n-y} $$
+The likelihood is equivalent to a common logistic regression model with logit link function and without any fixed effects, that is, the simple intercept model. 
+
+Posterior density:
+$$p(\theta|y) \propto p(\theta)p(y|\theta)$$
+The exact form of the posterior distribution will depend on the choice of the prior. We will, for a few simple models, test several non-informative and informative prior distributions. For the binomial model of the number of children, a beta prior distribution as the conjugate (resulting also in a beta posterior) is an obvious choice we want to include in our set of possible priors. 
+
+## Priors and prior predictive checks
+
+The percentage of children in Afghanistan in mid-2020 was estimated at 49.2 per cent (UN DESA WPP 2019). This provides a useful reference for prior predictive checks, that is, the percentage of children we might expect to see in different countries of asylum _before_ including any of UNHCR's refugee population data in the models. We can also use this knowledge directly in the models by including it as mean of an informative prior distribution.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
