@@ -34,7 +34,7 @@ The exact form of the posterior distribution will depend on the choice of the pr
 
 The percentage of children in Afghanistan in mid-2020 was estimated at 49.2 per cent (UN DESA WPP 2019). This provides a useful reference for prior predictive checks, that is, the percentage of children we might expect to see in different countries of asylum _before_ including any of UNHCR's refugee population data in the models. We can also use this knowledge directly in the models by including it as mean of an informative prior distribution.
 
-
+hist(as.numeric(demref2020.ori.asy.age.pri %>% filter(asylum_iso3 == "DEU") %>% select(`1`:`10000`))/as.numeric(demref2020.ori.asy.age.pri %>% filter(asylum_iso3 == "DEU") %>% select(`totalEndYear`)))
 
 
 
