@@ -100,6 +100,44 @@ priorpred.child.0_check <- data.frame(theta = rep(priorint.child.0.norm.0.1_5, t
   arrange(simulations)
 
 
+
+## beta(2, 3)
+
+# simulate thetas 
+
+priorint.child.0.beta.2.3 <- rbeta(1000, 2, 3) # simulate 1000 intercepts (= probability of child)
+hist(priorint.child.0.beta.2.3) # nearly uniform but slightly less mass on extreme margins - generally sensible?
+
+# for each country of asylum with available data, simulate 1 data points (= #of children) per theta for given number of refugees
+
+# demref2020.ori.asy.age.dat$totalEndYear
+
+priorpred.child.0.beta23 <- matrix(nrow = dim(demref2020.ori.asy.age.dat)[1], ncol = 10000) 
+
+
+
+for(j in 1:length(priorint.child.0.beta.2.3)){
+  k = j*10-9
+  priorpred.child.0.beta23[,k:(k+9)] <- t(sapply(demref2020.ori.asy.age.dat$totalEndYear, 
+                                          FUN = function(x){ rbinom(n=10, size= x, 
+                                                                    prob = priorint.child.0.beta.2.3[j])}))
+}
+
+
+priorpred.child.0.beta23 <- cbind(demref2020.ori.asy.age.dat, priorpred.child.0.beta23)
+
+hist(as.numeric(priorpred.child.0.beta23 %>% filter(asylum_iso3 == "PAK") %>% 
+                  select(`1`:`10000`)), breaks = 100)
+
+
+
+priorpred.child.0_check <- data.frame(theta = rep(priorint.child.0.norm.0.1_5, times = 1, each = 10),
+                                      simulations = as.numeric(priorpred.child.0 %>% filter(asylum_iso3 == "PAK") %>% 
+                                                                 select(`1`:`10000`))) %>% 
+  arrange(simulations)
+
+
+
 #### Model 1: binomial children with variable intercepts over countries of asylum
 
 ## prior predictive simulation
