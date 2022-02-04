@@ -68,26 +68,37 @@ demref2020.ori.asy.age.mis <- demref2020.ori.asy.age %>% filter(typeOfDisaggrega
 
 # simulate thetas 
 
-priorint.child.0.norm.0.1_5 <- invlogit(rnorm(10000, mean = 0, sd = 1.5)) # simulate 1000 intercepts (= probability of child)
+priorint.child.0.norm.0.1_5 <- invlogit(rnorm(1000, mean = 0, sd = 1.5)) # simulate 1000 intercepts (= probability of child)
 hist(priorint.child.0.norm.0.1_5) # nearly uniform but slightly less mass on extreme margins - generally sensible?
 
 # for each country of asylum with available data, simulate 1 data points (= #of children) per theta for given number of refugees
 
-demref2020.ori.asy.age.dat$totalEndYear
+# demref2020.ori.asy.age.dat$totalEndYear
 
 priorpred.child.0 <- matrix(nrow = dim(demref2020.ori.asy.age.dat)[1], ncol = 10000) 
 
 
-for(i in 1:dim(priorpred.child.0)[1]){
-priorpred.child.0[i,] <- rbinom(n=dim(priorpred.child.0)[2], 
-                                size= demref2020.ori.asy.age.dat$totalEndYear[i], 
-                                prob = priorint.child.0.norm.0.1_5)
+
+for(j in 1:length(priorint.child.0.norm.0.1_5)){
+k = j*10-9
+priorpred.child.0[,k:(k+9)] <- t(sapply(demref2020.ori.asy.age.dat$totalEndYear, 
+                                        FUN = function(x){ rbinom(n=10, size= x, 
+                                                            prob = priorint.child.0.norm.0.1_5[j])}))
   }
 
 
-demref2020.ori.asy.age.pri <- cbind(demref2020.ori.asy.age.dat, priorpred.child.0)
+priorpred.child.0 <- cbind(demref2020.ori.asy.age.dat, priorpred.child.0)
 
-hist(as.numeric(demref2020.ori.asy.age.pri %>% filter(asylum_iso3 == "DEU") %>% select(`1`:`10000`))/as.numeric(demref2020.ori.asy.age.pri %>% filter(asylum_iso3 == "DEU") %>% select(`totalEndYear`)))
+hist(as.numeric(priorpred.child.0 %>% filter(asylum_iso3 == "PAK") %>% 
+                  select(`1`:`10000`)), breaks = 100)
+
+
+
+priorpred.child.0_check <- data.frame(theta = rep(priorint.child.0.norm.0.1_5, times = 1, each = 10),
+                                      simulations = as.numeric(priorpred.child.0 %>% filter(asylum_iso3 == "PAK") %>% 
+                                                                 select(`1`:`10000`))) %>% 
+  arrange(simulations)
+
 
 #### Model 1: binomial children with variable intercepts over countries of asylum
 
