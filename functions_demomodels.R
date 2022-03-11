@@ -1,4 +1,14 @@
 
+### function logit ###
+### calculates logit
+
+### begin function logit
+logit <- function(p){log(p/(1-p))}
+### end function logit
+
+
+
+
 ### function invlogit ###
 ### calculates inverse logit to bring binomial default link to probability
 
