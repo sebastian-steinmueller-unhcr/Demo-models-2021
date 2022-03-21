@@ -1,6 +1,6 @@
 ############################################ START ######################################################
 
-############################################ demomodels_test_afg.R ################################################
+############################################ demomodels_afg.R ################################################
 
 #### Queries: UNHCR Statistics and Demographics Section, Sebastian, steinmul@unhcr.org
 #### Project: Demographic models 2021 (after GT)
@@ -157,7 +157,7 @@ m.child.1 <- brm(children | trials(totalEndYear) ~ 1 + (1|asylum_iso3),
                     sample_prior = "yes",
                     data = demref2020.ori.asy.age %>% filter(typeOfDisaggregationAge  == "Age"))
 
-saveRDS(priorpred.child.1, file = "m.child.1.rds")
+saveRDS(m.child.1, file = "output/mchild1-afg.rds")
 
 
 
