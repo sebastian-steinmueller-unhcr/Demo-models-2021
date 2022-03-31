@@ -6,7 +6,7 @@
 #### Project: Demographic models 2021 (after GT)
 #### Description: Analyse posterior distribution of test models with Afghan refugees
 
-rm(list=ls()) # clear workspace
+rm(list=ls()) # clear workspace 
 
 
 #### I. Read data, packages etc ##### 
