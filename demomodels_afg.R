@@ -8,6 +8,8 @@
 
 rm(list=ls()) # clear workspace
 
+# set seed
+set.seed(1539)
 
 #### I. Read data, packages etc ##### 
 
@@ -17,8 +19,8 @@ library(tidyverse)
 library(stringi)
 library(magrittr)
 library(brms)
-#library(ggridges)
 library(tidybayes)
+library(ProbBayes)
 
 ### functions
 source("functions_demomodels.R")
@@ -57,88 +59,35 @@ demref2020.ori.asy.age.mis <- demref2020.ori.asy.age %>% filter(typeOfDisaggrega
 ####### II. Simple models without covariates #######
 
 
-#### II.A Binomial models to estimate proportion of children and women only ##### 
+##### II.A Binomial models to estimate proportion of children and women only ##### 
 
 
-#### Model 0: binomial children with fixed intercept, no multilevel structure over countries of asylum
+#### Model 0: binomial children with fixed intercept, multilevel structure over countries of asylum, no covariates
 
-### prior predictive simulation
+### find prior distribution on theta
 
-## normal([wppprop], 1.5)
-
-# at mid-2020, the proportion of children in Afghanistan was 49.2% (WPP)- this seems a sensible prior mean
-
-logit(0.492)
+## beta(wpp, 1.5) converted to normal distribution for logit link on theta
 
 # simulate thetas 
 
-priorint.child.0.norm.wpp.1_5 <- invlogit(rnorm(1000, mean = logit(0.492), sd = 1.5)) # simulate 1000 intercepts (= probability of child)
-# hist(priorint.child.0.norm.wpp.1_5) # nearly uniform but slightly less mass on extreme margins - generally sensible?
+# normal equivalent of beta with Afghan population 0.492% children and beta fixed to 1.5
 
-priorpred.child.0.norm.wpp.1_5 <- matrix(nrow = dim(demref2020.ori.asy.age.dat)[1], ncol = 10000) 
+# 1) find appropriate beta 
+wppprop <- 0.492
+hyp2 <- 1.5
+hyp1 <- (hyp2*wppprop)/(1-wppprop)
+priorint.child.0.beta <- rbeta(1000, hyp1, hyp2) # simulate 1000 intercepts (= probability of child)
+hist(priorint.child.0.beta)
 
-# for each simulated intercept, draw 10 data points simulating the # of children dependent on 
-# the total # of refugees in the country of asylum:
-for(j in 1:length(priorint.child.0.norm.wpp.1_5)){ 
-  k = j*10-9
-  priorpred.child.0.norm.wpp.1_5[,k:(k+9)] <- t(sapply(demref2020.ori.asy.age.dat$totalEndYear, 
-                                                       FUN = function(x){ rbinom(n=10, size= x, 
-                                                                                 prob = priorint.child.0.norm.wpp.1_5[j])}))
-}
+# 2 convert to theta as logit(p)
+p_sim <- rbeta(10000, hyp1, hyp2)
+theta_sim <- log(p_sim / (1 - p_sim))
 
-priorpred.child.0.norm.wpp.1_5 <- cbind(demref2020.ori.asy.age.dat, priorpred.child.0.norm.wpp.1_5)
-
-hist(as.numeric(priorpred.child.0.norm.wpp.1_5 %>% filter(asylum_iso3 == "PAK") %>% 
-                  select(`1`:`10000`)), breaks = 100)
-
-# priorpred.child.0.norm.wpp.1_5_check <- data.frame(theta = rep(priorpred.child.0.norm.wpp.1_5, times = 1, each = 10),
-#                                       simulations = as.numeric(priorpred.child.0.norm.wpp.1_5 %>% filter(asylum_iso3 == "PAK") %>% 
-#                                                                  select(`1`:`10000`))) %>% 
-#   arrange(simulations)
-# 
-
-
-
-## beta(wpp, 1.5)
-
-# simulate thetas 
-
-# with Afghan population 0.492% children and beta fixed to 1.5
-
-hyp1 <- (1.5*0.492)/(1-0.492)
-
-priorint.child.0.beta.2.3 <- rbeta(1000, hyp1, 1.5) # simulate 1000 intercepts (= probability of child)
-
-# for each country of asylum with available data, simulate 1 data points (= #of children) per theta for given number of refugees
-
-priorpred.child.0.beta23 <- matrix(nrow = dim(demref2020.ori.asy.age.dat)[1], ncol = 10000) 
-
-# for each simulated intercept, draw 10 data points simulating the # of children dependent on 
-# the total # of refugees in the country of asylum:
-for(j in 1:length(priorint.child.0.beta.2.3)){
-  k = j*10-9
-  priorpred.child.0.beta23[,k:(k+9)] <- t(sapply(demref2020.ori.asy.age.dat$totalEndYear, 
-                                          FUN = function(x){ rbinom(n=10, size= x, 
-                                                                    prob = priorint.child.0.beta.2.3[j])}))
-}
-
-priorpred.child.0.beta23 <- cbind(demref2020.ori.asy.age.dat, priorpred.child.0.beta23)
-
-hist(as.numeric(priorpred.child.0.beta23 %>% filter(asylum_iso3 == "PAK") %>% 
-                  select(`1`:`10000`)), breaks = 100)
-
-
-
-priorpred.child.0.beta23_check <- data.frame(theta = rep(priorint.child.0.beta.2.3, times = 1, each = 10),
-                                      simulations = as.numeric(priorpred.child.0.beta23 %>% filter(asylum_iso3 == "PAK") %>% 
-                                                                 select(`1`:`10000`))) %>% 
-  arrange(simulations)
-
-
-
-
-
-
+# 3 find corresponding normal distribution
+prior_mu <- mean(theta_sim)
+prior_sd <- sd(theta_sim)
+prior_sim <- rnorm(10000, prior_mu, prior_sd)
+hist(prior_sim)
 
 
 
@@ -151,9 +100,18 @@ priorpred.child.0.beta23_check <- data.frame(theta = rep(priorint.child.0.beta.2
 
 # simulate predictive priors and model
 
+
+stanvars <- stanvar(prior_mu, name = "prior_mu") + stanvar(prior_sd, name = "prior_sd")
+
+prior.child.1.int <- prior(
+  normal(prior_mu, prior_sd),
+  class = Intercept
+)
+
 m.child.1 <- brm(children | trials(totalEndYear) ~ 1 + (1|asylum_iso3),
                     family = binomial(link = "logit"),
-                    prior(beta(1.452756, 1.5), class = Intercept),
+                    prior = prior.child.1.int,
+                    stanvars=stanvars,
                     sample_prior = "yes",
                     data = demref2020.ori.asy.age %>% filter(typeOfDisaggregationAge  == "Age"))
 
