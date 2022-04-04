@@ -17,7 +17,7 @@ library(tidyverse)
 library(stringi)
 library(magrittr)
 library(brms)
-#library(ggridges)
+library(bayesplot)
 library(tidybayes)
 
 ### options
@@ -43,21 +43,44 @@ m.child.1 <- readRDS("output/mchild1-afg.rds")
 ##### II. Model checks #####
 
 
-### II.A Prior predictive checks: 
+### II.A General model summaries
+
+summary(m.child.1)
+prior_summary(m.child.1)
+p.m.child.1.mcmc <- plot(m.child.1) # trace and density plots
+
+
+### II.B Prior predictive checks: 
 # Do our prior assumptions make sense?
 
+m.child.1.lpprior <- prior_samples(m.child.1)
+m.child.1.prior <- m.child.1.lpprior %>%
+  mutate(across(.fns = inv_logit_scaled))
+
+p.child.1.prior <- hist(m.child.1.prior$Intercept)
+
+plot(density(m.child.1.lpprior$sd_asylum_iso3))
 
 
-
-
-### II.B Posterior predictive checks
+### II.C Posterior predictive checks
 # Could the data actually come from the posterior distribution, i.e. is the model reasonably specified?
 
 
+m.child.1.postpred <- m.child.1$data %>% 
+  add_predicted_draws(m.child.1)
+
+p.child.1.postpred <- ppc_intervals_grouped(y = m.child.1$data$children, posterior_predict(m.child.1), prob = 0.95,
+                       group = m.child.1$data$asylum_iso3)
 
 
-### II.C Cross-validation
+
+### II.D Cross-validation
 # Predictive accuracy of the models
 
+m.child.1.cv <- loo(m.child.1, save_psis = TRUE)
+m.child.1.cv
+p.child.1.cv <- plot(m.child.1.cv)
 
+
+save.image( file = "output/post.mchild1-afg.RData")
 
