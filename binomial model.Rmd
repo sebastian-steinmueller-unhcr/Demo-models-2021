@@ -48,7 +48,7 @@ To create multiple imputations, we are ultimately interested in obtaining draws 
 
 ## Prior predictive check
 
-The prior distribution on the global intercept $p_j$, or more precise on its logit $\theta_j$, encodes our subject matter knowledge of the proportion of children in the global Afghan refugee population. We do not want to make overly strong assumptions and choose the above-mentioned Normal prior with mean at the WPP proportion of children and a large enough standard deviation that results in a relatively flat distribution on the [0,1] parameter space of $p_j$. There is slightly less probability on the tails close to 0 and 1, mirroring our belief that especially values close to 1, that is, 100% of the Afghan refugees in a country are children, are unlikely. We might want to slightly improve this in future iterations to reflect the fact that proportions close to 0% are slightly more likely, however with this flat distribution the prior should play a relatively minor roles and has a mostly regularising function for countries with missing demographic values.
+The prior distribution on the global intercept $p_j$, or more precise on its logit $\theta_j$, encodes our subject matter knowledge of the proportion of children in the global Afghan refugee population. We do not want to make overly strong assumptions and choose the above-mentioned Normal prior with mean at the WPP proportion of children and a large enough standard deviation that results in a relatively flat distribution on the [0,1] parameter space of $p_j$. There is slightly less probability on the tails close to 0 and 1, mirroring our belief that especially values close to 1, that is, 100% of the Afghan refugees in a country are children, are unlikely. We might want to slightly improve this in future iterations to reflect the fact that proportions close to 0% are slightly more likely.
 
 ```{r  prior, fig.height = 4, fig.width =5, fig.align='center', echo=F, fig.cap="Simulation of global intercepts from the prior distribution"}
 ggplot(m.child.1.prior, aes(x=Intercept)) + 
@@ -60,7 +60,7 @@ ggplot(m.child.1.prior, aes(x=Intercept)) +
               color=unhcrPaletteRed[1], linetype="dashed", size=1)
 ``` 
 
-The prior simulation shows us the knowledge about the proportion of children in the global Afghan refugee population before we see any data. The distribution is plausible, and we can choose similar prior model distributions for the multinomial version of the models for all sex/age brackets. 
+The prior simulation shows us the knowledge about the proportion of children in the global Afghan refugee population before we see any data. The dashed red line indicates the WPP proportion of children in the national population. The distribution is plausible, and we can choose equivalent prior model distributions for the multinomial version of the models for all sex/age brackets. 
 
 ## Chains
 
@@ -80,7 +80,7 @@ p.child.1.postpred
 ``` 
 
 
-We see (Figure 3) that the model fit is generally plausible and includes the observed values. We will have to look at the uncertainty however - the uncertainty bands seem narrow, indicating that potentially we are overfitting or mis-specifying the variance. 
+We see (Figure 3) that the model fit is generally plausible and includes the observed values. The uncertainty bands are narrow, reflecting the fact we fitted a model unconstrained by covariates that uses only country-level varying intercepts and therefore can be expected to closely fit to existing datapoints.  
 
 ## Leave-one-out cross-validation
 
@@ -90,7 +90,7 @@ Leave-one-out cross-validation can help us decide whether the model has sufficie
 plot(m.child.1.cv)
 ``` 
 
-We evaluate the cross-validation with a measure called Pareto k-estimates that tells us how influential each data point (country of asylum) is. Values over 0.7 indicate model misspecification. We can see (Figure 4) a lot of values over that threshold, potentially confirming the impression from the posterior predictive check that our model might be overfitting. 
+We evaluate the cross-validation with a measure called Pareto k-estimates that tells us how influential each data point (country of asylum) is. Values over 0.7 indicate model misspecification. We can see (Figure 4) a lot of values over that threshold, most likely reflecting the fact that predictions are only informed by the standard deviation of the intercept over countries of asylum. Adding covariates might help us improve the predictive power of the model.
 
 
 
