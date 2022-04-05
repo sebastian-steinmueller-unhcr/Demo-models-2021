@@ -11,6 +11,11 @@ knitr::opts_chunk$set(
 )
 ## run code to create descriptive figures and tables
 
+library(bayesplot)
+library(tidybayes)
+library(ggplot2)
+
+
 load("output/post.mchild1-afg.RData")
 
 ```
@@ -46,7 +51,13 @@ To create multiple imputations, we are ultimately interested in obtaining draws 
 The prior distribution on the global intercept $p_j$, or more precise on its logit $\theta_j$, encodes our subject matter knowledge of the proportion of children in the global Afghan refugee population. We do not want to make overly strong assumptions and choose the above-mentioned Normal prior with mean at the WPP proportion of children and a large enough standard deviation that results in a relatively flat distribution on the [0,1] parameter space of $p_j$. There is slightly less probability on the tails close to 0 and 1, mirroring our belief that especially values close to 1, that is, 100% of the Afghan refugees in a country are children, are unlikely. We might want to slightly improve this in future iterations to reflect the fact that proportions close to 0% are slightly more likely, however with this flat distribution the prior should play a relatively minor roles and has a mostly regularising function for countries with missing demographic values.
 
 ```{r  prior, fig.height = 4, fig.width =5, fig.align='center', echo=F, fig.cap="Simulation of global intercepts from the prior distribution"}
-hist(m.child.1.prior$Intercept)
+ggplot(m.child.1.prior, aes(x=Intercept)) + 
+  theme_minimal() +
+  theme(panel.grid.minor.y = element_blank(),
+        panel.grid.major.y = element_blank()) +
+  geom_histogram(color=unhcrPaletteBlue[1], fill="white") +
+  geom_vline(aes(xintercept=0.492),
+              color=unhcrPaletteRed[1], linetype="dashed", size=1)
 ``` 
 
 The prior simulation shows us the knowledge about the proportion of children in the global Afghan refugee population before we see any data. The distribution is plausible, and we can choose similar prior model distributions for the multinomial version of the models for all sex/age brackets. 

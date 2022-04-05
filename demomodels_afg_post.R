@@ -19,6 +19,7 @@ library(magrittr)
 library(brms)
 library(bayesplot)
 library(tidybayes)
+library(ggplot2)
 
 ### options
 options(scipen = 999)
@@ -61,6 +62,13 @@ p.child.1.prior <- hist(m.child.1.prior$Intercept)
 
 plot(density(m.child.1.lpprior$sd_asylum_iso3))
 
+p.child.1.prior <- ggplot(m.child.1.prior, aes(x=Intercept)) + 
+  theme_minimal() +
+  theme(panel.grid.minor.y = element_blank(),
+        panel.grid.major.y = element_blank()) +
+  geom_histogram(color=unhcrPaletteBlue[1], fill="white") +
+  geom_vline(aes(xintercept=0.492),
+              color=unhcrPaletteRed[1], linetype="dashed", size=1)
 
 ### II.C Posterior predictive checks
 # Could the data actually come from the posterior distribution, i.e. is the model reasonably specified?
