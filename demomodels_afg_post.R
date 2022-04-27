@@ -39,9 +39,12 @@ source("functions_demomodels.R")
 
 ### data
 m.child.1 <- readRDS("output/mchild1-afg.rds")
-
+m.child.2 <- readRDS("output/mchild2-afg.rds")
 
 ##### II. Model checks #####
+
+
+#### Model 1
 
 
 ### II.A General model summaries
@@ -90,5 +93,60 @@ m.child.1.cv
 p.child.1.cv <- plot(m.child.1.cv)
 
 
-save.image( file = "output/post.mchild1-afg.RData")
 
+
+#### Model 2
+
+
+### II.A General model summaries
+
+summary(m.child.2)
+prior_summary(m.child.2)
+p.m.child.2.mcmc <- plot(m.child.2) # trace and density plots
+
+
+### II.B Prior predictive checks: 
+# Do our prior assumptions make sense?
+
+m.child.2.lpprior <- prior_samples(m.child.2)
+m.child.2.prior <- m.child.2.lpprior %>%
+  mutate(across(.fns = inv_logit_scaled))
+
+p.child.2.prior <- hist(m.child.2.prior$Intercept)
+
+plot(density(m.child.2.lpprior$sd_asylum_iso3))
+
+p.child.2.prior <- ggplot(m.child.2.prior, aes(x=Intercept)) + 
+  theme_minimal() +
+  theme(panel.grid.minor.y = element_blank(),
+        panel.grid.major.y = element_blank()) +
+  geom_histogram(color=unhcrPaletteBlue[1], fill="white") +
+  geom_vline(aes(xintercept=0.492),
+             color=unhcrPaletteRed[1], linetype="dashed", size=1)
+
+### II.C Posterior predictive checks
+# Could the data actually come from the posterior distribution, i.e. is the model reasonably specified?
+
+
+m.child.2.postpred <- m.child.2$data %>% 
+  add_predicted_draws(m.child.2)
+
+p.child.2.postpred <- ppc_intervals_grouped(y = m.child.2$data$children, posterior_predict(m.child.2), prob = 0.95,
+                                            group = m.child.2$data$asylum_iso3)
+
+
+
+### II.D Cross-validation
+# Predictive accuracy of the models
+
+m.child.2.cv <- loo(m.child.2, save_psis = TRUE)
+m.child.2.cv
+p.child.2.cv <- plot(m.child.2.cv)
+
+
+
+##### save workspace
+
+save.image( file = "output/post.mchild-afg.RData")
+
+############################################ END ######################################################

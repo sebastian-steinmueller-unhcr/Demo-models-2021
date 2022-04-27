@@ -37,8 +37,14 @@ rm(demref2020)
 
 demref2020.ori.asy.age <- demref2020.ori.asy.age %>% 
   filter(origin_iso3 == "AFG") %>%
-  select(origin, origin_iso3, origin_country, asylum, asylum_iso3, asylum_country,
-         children, totalEndYear, typeOfDisaggregationAge)
+  select(origin, origin_iso3, origin_country, asylum, asylum_iso3, asylum_country, `asylum_Region Name`,
+         children, totalEndYear, typeOfDisaggregationAge) %>% # add-hoc adding land neighbours for Afghanistan as covariate
+  mutate(neighbour = case_when(
+    asylum_iso3 %in% c("PAK", "TJK", "CHN", "TKM", "UZB", "IRN") ~ 1,
+    !(asylum_iso3 %in% c("PAK", "TJK", "CHN", "TKM", "UZB", "IRN")) ~ 0
+    )
+  ) %>% 
+  rename(asylum_RegionName = `asylum_Region Name`)
 
 # View(demref2020.ori.asy.age %>% filter(typeOfDisaggregationAge  == "Age"))
 
@@ -93,10 +99,6 @@ hist(prior_sim)
 
 #### Model 1: binomial children with variable intercepts over countries of asylum
 
-## prior predictive simulation
-
-# simulate theta directly to start with
-
 
 # simulate predictive priors and model
 
@@ -127,3 +129,18 @@ saveRDS(m.child.1, file = "output/mchild1-afg.rds")
 
 
 ####### III. Add structure and covariates #######
+
+#### Model 2: binomial children with variable intercepts over regions and countries of asylum and with neighbour covariate
+
+
+# simulate predictive priors and model
+
+m.child.2 <- brm(children | trials(totalEndYear) ~ 1 + neighbour + (1|asylum_RegionName/asylum_iso3),
+                 family = binomial(link = "logit"),
+                 prior = prior.child.1.int,
+                 stanvars=stanvars,
+                 sample_prior = "yes",
+                 data = demref2020.ori.asy.age %>% filter(typeOfDisaggregationAge  == "Age"))
+
+saveRDS(m.child.2, file = "output/mchild2-afg.rds")
+

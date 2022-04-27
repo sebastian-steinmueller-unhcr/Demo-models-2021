@@ -16,7 +16,7 @@ library(tidybayes)
 library(ggplot2)
 
 
-load("output/post.mchild1-afg.RData")
+load("output/post.mchild-afg.RData")
 
 ```
 
@@ -43,10 +43,10 @@ For $\mu$ we use the logit of the proportion of children in the national country
 To create multiple imputations, we are ultimately interested in obtaining draws from the posterior predictive distribution on the level of the response variable $y_j$ (i.e. counts of children in country of asylum j given the known population size $n_j$) for countries of asylum with missing demographic data, that is, draws from $p(\tilde{y}|y)$. As an additional step and since we are interested in draws from the posterior predictive distribution for countries without observed demographic data that would consequently not have been part of the original model fit, for each country of asylum with missing data we first take draws from the posterior distribution of the population parameter $\theta_j$ for a new country j and label these newly simulated parameters $\tilde{\theta}$. We then draw $\tilde{y}$ given  $\tilde{\theta}$.
 
 
-# Model test with end-2020 data on refugees from Afghanistan
+# Model tests with end-2020 data on refugees from Afghanistan
 
 
-## Prior predictive check
+## Prior predictive check for intercept
 
 The prior distribution on the global intercept $p_j$, or more precise on its logit $\theta_j$, encodes our subject matter knowledge of the proportion of children in the global Afghan refugee population. We do not want to make overly strong assumptions and choose the above-mentioned Normal prior with mean at the WPP proportion of children and a large enough standard deviation that results in a relatively flat distribution on the [0,1] parameter space of $p_j$. There is slightly less probability on the tails close to 0 and 1, mirroring our belief that especially values close to 1, that is, 100% of the Afghan refugees in a country are children, are unlikely. We might want to slightly improve this in future iterations to reflect the fact that proportions close to 0% are slightly more likely.
 
@@ -62,7 +62,10 @@ ggplot(m.child.1.prior, aes(x=Intercept)) +
 
 The prior simulation shows us the knowledge about the proportion of children in the global Afghan refugee population before we see any data. The dashed red line indicates the WPP proportion of children in the national population. The distribution is plausible, and we can choose equivalent prior model distributions for the multinomial version of the models for all sex/age brackets. 
 
-## Chains
+
+## Model 1: Intercept model with varying intercept by country of asylum
+
+### Chains
 
 
 ```{r  chains, fig.height = 4, fig.width =5, fig.align='center', echo=F, fig.cap="Trace and density"}
@@ -71,7 +74,7 @@ plot(m.child.1)
 
 No visible issues with chain convergence.
 
-## Posterior predictive check
+### Posterior predictive check
 
 A posterior predictive check on the level of the response variable $y_j$ for each country of asylum j can show us the range of values the fitted model proposes for each country with observed data. By comparing it to the actually observed data, we can assess whether the model fits the data.
 
@@ -82,7 +85,7 @@ p.child.1.postpred
 
 We see (Figure 3) that the model fit is generally plausible and includes the observed values. The uncertainty bands are narrow, reflecting the fact we fitted a model unconstrained by covariates that uses only country-level varying intercepts and therefore can be expected to closely fit to existing datapoints.  
 
-## Leave-one-out cross-validation
+### Leave-one-out cross-validation
 
 Leave-one-out cross-validation can help us decide whether the model has sufficient out-of-sample predictive power. For this, we re-fit the model leaving out one country with observed data at a time and compare the prediction for that country from the model fit to the actually observed data. This check is particularly important for our models since we are aiming to make predictions of the number of children for countries with unobserved data.
 
@@ -94,4 +97,36 @@ We evaluate the cross-validation with a measure called Pareto k-estimates that t
 
 
 
+
+## Model 2: Model with varying intercept by region and country of asylum and binary land neighbour covariate variable
+
+### Chains
+
+
+```{r  chains2, fig.height = 4, fig.width =5, fig.align='center', echo=F, fig.cap="Trace and density"}
+plot(m.child.2)
+``` 
+
+No visible issues with chain convergence.
+
+### Posterior predictive check
+
+A posterior predictive check on the level of the response variable $y_j$ for each country of asylum j can show us the range of values the fitted model proposes for each country with observed data. By comparing it to the actually observed data, we can assess whether the model fits the data.
+
+```{r  posterior2, fig.height = 8, fig.width =10, fig.align='center', echo=F, fig.cap="Posterior predictive distribution (y-rep) of the number of children per country of asylum with observed data (y)"}
+p.child.2.postpred 
+``` 
+
+
+We see (Figure 6) that the model fit is generally plausible and includes the observed values. The uncertainty bands are narrow, reflecting the fact we fitted a model unconstrained by covariates that uses only country-level varying intercepts and therefore can be expected to closely fit to existing datapoints.  
+
+### Leave-one-out cross-validation
+
+Leave-one-out cross-validation can help us decide whether the model has sufficient out-of-sample predictive power. For this, we re-fit the model leaving out one country with observed data at a time and compare the prediction for that country from the model fit to the actually observed data. This check is particularly important for our models since we are aiming to make predictions of the number of children for countries with unobserved data.
+
+```{r  loo2, fig.height = 4, fig.width =5, fig.align='center', echo=F, fig.cap="Pareto k estimates"}
+plot(m.child.2.cv)
+``` 
+
+We evaluate the cross-validation with a measure called Pareto k-estimates that tells us how influential each data point (country of asylum) is. Values over 0.7 indicate model misspecification. We can see (Figure 7) a lot of values over that threshold, most likely reflecting the fact that predictions are only informed by the standard deviation of the intercept over countries of asylum. Adding covariates might help us improve the predictive power of the model.
 
