@@ -103,7 +103,7 @@ hist(prior_sim)
 # simulate predictive priors and model
 
 
-stanvars <- stanvar(prior_mu, name = "prior_mu") + stanvar(prior_sd, name = "prior_sd")
+stanvars.1 <- stanvar(prior_mu, name = "prior_mu") + stanvar(prior_sd, name = "prior_sd")
 
 prior.child.1.int <- prior(
   normal(prior_mu, prior_sd),
@@ -113,7 +113,7 @@ prior.child.1.int <- prior(
 m.child.1 <- brm(children | trials(totalEndYear) ~ 1 + (1|asylum_iso3),
                     family = binomial(link = "logit"),
                     prior = prior.child.1.int,
-                    stanvars=stanvars,
+                    stanvars=stanvars.1,
                     sample_prior = "yes",
                     data = demref2020.ori.asy.age %>% filter(typeOfDisaggregationAge  == "Age"))
 
@@ -135,10 +135,19 @@ saveRDS(m.child.1, file = "output/mchild1-afg.rds")
 
 # simulate predictive priors and model
 
+stanvars.2 <- stanvar(prior_mu, name = "prior_mu") + stanvar(prior_sd, name = "prior_sd")
+
+
+prior.child.2.int <- prior(
+  normal(prior_mu, prior_sd),
+  class = Intercept
+)
+
+
 m.child.2 <- brm(children | trials(totalEndYear) ~ 1 + neighbour + (1|asylum_RegionName/asylum_iso3),
                  family = binomial(link = "logit"),
-                 prior = prior.child.1.int,
-                 stanvars=stanvars,
+                 prior = prior.child.2.int,
+                 stanvars=stanvars.2,
                  sample_prior = "yes",
                  data = demref2020.ori.asy.age %>% filter(typeOfDisaggregationAge  == "Age"))
 

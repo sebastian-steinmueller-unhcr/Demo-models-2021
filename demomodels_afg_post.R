@@ -38,6 +38,7 @@ source("functions_demomodels.R")
 
 
 ### data
+load("data/demref2020.RData")
 m.child.1 <- readRDS("output/mchild1-afg.rds")
 m.child.2 <- readRDS("output/mchild2-afg.rds")
 
