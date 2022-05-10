@@ -142,7 +142,18 @@ p.child.2.postpred <- ppc_intervals_grouped(y = m.child.2$data$children, posteri
 
 m.child.2.cv <- loo(m.child.2, save_psis = TRUE)
 m.child.2.cv
-p.child.2.cv <- plot(m.child.2.cv)
+p.child.2.cv <- plot(m.child.2.cv) # Pareto k plot
+
+m.child.2.cv.pred <-  m.child.2$data |>
+  select(asylum_iso3 , totalEndYear, children) |>
+  left_join(m.child.1.postpred %>% select(asylum_iso3, `.prediction`) %>% 
+              group_by(asylum_iso3) %>% 
+              summarise("Prediction" = mean(`.prediction`)), 
+            by = "asylum_iso3") |>
+  bind_cols("LOO predict" = loo_predict(m.child.2, sample_new_levels = "gaussian")) |>
+  bind_cols(loo_predictive_interval(m.child.2, sample_new_levels = "gaussian"))
+
+
 
 
 
