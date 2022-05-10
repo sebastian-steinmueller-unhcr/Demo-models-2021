@@ -20,6 +20,7 @@ library(brms)
 library(bayesplot)
 library(tidybayes)
 library(ggplot2)
+library(gridExtra)
 
 ### options
 options(scipen = 999)
@@ -91,7 +92,31 @@ p.child.1.postpred <- ppc_intervals_grouped(y = m.child.1$data$children, posteri
 
 m.child.1.cv <- loo(m.child.1, save_psis = TRUE)
 m.child.1.cv
-p.child.1.cv <- plot(m.child.1.cv)
+p.child.1.cv <- plot(m.child.1.cv) # Pareto k plot
+
+m.child.1.cv.pred <-  m.child.1$data |>
+  select(asylum_iso3 , totalEndYear, children) |>
+  left_join(m.child.1.postpred %>% select(asylum_iso3, `.prediction`) %>% 
+              group_by(asylum_iso3) %>% 
+              summarise("Prediction" = mean(`.prediction`)), 
+            by = "asylum_iso3") |>
+  bind_cols("LOO predict" = loo_predict(m.child.1, sample_new_levels = "gaussian")) |>
+  bind_cols(loo_predictive_interval(m.child.1, sample_new_levels = "gaussian")) |>
+  mutate(
+    children = children/totalEndYear,
+    Prediction = Prediction/totalEndYear,
+    `LOO predict` = `LOO predict`/totalEndYear,
+    `5%` = `5%`/totalEndYear,
+    `95%` = `95%`/totalEndYear
+  ) |>
+  left_join(asylum_countries %>% select(asylum_iso3, asylum_country), by = "asylum_iso3") 
+
+
+p.child.1.cv.pred <- ggplot(m.child.1.cv.pred %>% arrange(children), aes(x=reorder(asylum_country, children), y=children)) + 
+  geom_point() + 
+  #  ylim(-10, 20) +
+  geom_errorbar(stat="identity", aes(ymin = `5%`, ymax = `95%`), width=0) +
+  coord_flip() 
 
 
 
@@ -151,10 +176,24 @@ m.child.2.cv.pred <-  m.child.2$data |>
               summarise("Prediction" = mean(`.prediction`)), 
             by = "asylum_iso3") |>
   bind_cols("LOO predict" = loo_predict(m.child.2, sample_new_levels = "gaussian")) |>
-  bind_cols(loo_predictive_interval(m.child.2, sample_new_levels = "gaussian"))
+  bind_cols(loo_predictive_interval(m.child.2, sample_new_levels = "gaussian")) |>
+  mutate(
+    children = children/totalEndYear,
+    Prediction = Prediction/totalEndYear,
+    `LOO predict` = `LOO predict`/totalEndYear,
+    `5%` = `5%`/totalEndYear,
+    `95%` = `95%`/totalEndYear
+  ) |>
+  left_join(asylum_countries %>% select(asylum_iso3, asylum_country), by = "asylum_iso3") 
 
 
+p.child.2.cv.pred <- ggplot(m.child.2.cv.pred, aes(x=reorder(asylum_country, children), y=children)) + 
+  geom_point() + 
+#  ylim(-10, 20) +
+  geom_errorbar(stat="identity", aes(ymin = `5%`, ymax = `95%`), width=0) +
+  coord_flip() 
 
+grid.arrange(p.child.1.cv.pred, p.child.2.cv.pred, nrow = 1)
 
 
 ##### save workspace
