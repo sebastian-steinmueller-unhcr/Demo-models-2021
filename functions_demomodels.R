@@ -1,4 +1,9 @@
 
+rmse <- function(y, yrep) {
+  yrep_mean <- colMeans(yrep)
+  sqrt(mean((yrep_mean - y)^2))
+}
+
 ### function logit ###
 ### calculates logit
 

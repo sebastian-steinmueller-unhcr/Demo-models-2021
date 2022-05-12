@@ -122,16 +122,9 @@ saveRDS(m.child.1, file = "output/mchild1-afg.rds")
 
 
 
- #### II.B Multinomial models to estimate full demographic composition ##### 
+####### Add structure and covariates #######
 
-
-
-
-
-####### III. Add structure and covariates #######
-
-#### Model 2: binomial children with variable intercepts over regions and countries of asylum and with neighbour covariate
-
+#### Model 2: binomial children with variable intercepts over regions and countries of asylum
 
 # simulate predictive priors and model
 
@@ -144,7 +137,7 @@ prior.child.2.int <- prior(
 )
 
 
-m.child.2 <- brm(children | trials(totalEndYear) ~ 1 + neighbour + (1|asylum_RegionName/asylum_iso3),
+m.child.2 <- brm(children | trials(totalEndYear) ~ 1 + (1|asylum_RegionName/asylum_iso3),
                  family = binomial(link = "logit"),
                  prior = prior.child.2.int,
                  stanvars=stanvars.2,
@@ -152,4 +145,30 @@ m.child.2 <- brm(children | trials(totalEndYear) ~ 1 + neighbour + (1|asylum_Reg
                  data = demref2020.ori.asy.age %>% filter(typeOfDisaggregationAge  == "Age"))
 
 saveRDS(m.child.2, file = "output/mchild2-afg.rds")
+
+
+
+
+#### Model 3: binomial children with variable intercepts over regions and countries of asylum and with neighbour covariate
+
+
+# simulate predictive priors and model
+
+stanvars.3 <- stanvar(prior_mu, name = "prior_mu") + stanvar(prior_sd, name = "prior_sd")
+
+
+prior.child.3.int <- prior(
+  normal(prior_mu, prior_sd),
+  class = Intercept
+)
+
+
+m.child.3 <- brm(children | trials(totalEndYear) ~ 1 + neighbour + (1|asylum_RegionName/asylum_iso3),
+                 family = binomial(link = "logit"),
+                 prior = prior.child.3.int,
+                 stanvars=stanvars.3,
+                 sample_prior = "yes",
+                 data = demref2020.ori.asy.age %>% filter(typeOfDisaggregationAge  == "Age"))
+
+saveRDS(m.child.3, file = "output/mchild3-afg.rds")
 

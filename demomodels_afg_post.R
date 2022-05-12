@@ -42,6 +42,7 @@ source("functions_demomodels.R")
 load("data/demref2020.RData")
 m.child.1 <- readRDS("output/mchild1-afg.rds")
 m.child.2 <- readRDS("output/mchild2-afg.rds")
+m.child.3 <- readRDS("output/mchild3-afg.rds")
 
 ##### II. Model checks #####
 
@@ -49,14 +50,14 @@ m.child.2 <- readRDS("output/mchild2-afg.rds")
 #### Model 1
 
 
-### II.A General model summaries
+### 1.A General model summaries
 
 summary(m.child.1)
 prior_summary(m.child.1)
 p.m.child.1.mcmc <- plot(m.child.1) # trace and density plots
 
 
-### II.B Prior predictive checks: 
+### 1.B Prior predictive checks: 
 # Do our prior assumptions make sense?
 
 m.child.1.lpprior <- prior_samples(m.child.1)
@@ -75,7 +76,7 @@ p.child.1.prior <- ggplot(m.child.1.prior, aes(x=Intercept)) +
   geom_vline(aes(xintercept=0.492),
               color=unhcrPaletteRed[1], linetype="dashed", size=1)
 
-### II.C Posterior predictive checks
+### 1.C Posterior predictive checks
 # Could the data actually come from the posterior distribution, i.e. is the model reasonably specified?
 
 
@@ -87,7 +88,7 @@ p.child.1.postpred <- ppc_intervals_grouped(y = m.child.1$data$children, posteri
 
 
 
-### II.D Cross-validation
+### 1.D Cross-validation
 # Predictive accuracy of the models
 
 m.child.1.cv <- loo(m.child.1, save_psis = TRUE)
@@ -124,14 +125,14 @@ p.child.1.cv.pred <- ggplot(m.child.1.cv.pred %>% arrange(children), aes(x=reord
 #### Model 2
 
 
-### II.A General model summaries
+### 2.A General model summaries
 
 summary(m.child.2)
 prior_summary(m.child.2)
 p.m.child.2.mcmc <- plot(m.child.2) # trace and density plots
 
 
-### II.B Prior predictive checks: 
+### 2.B Prior predictive checks: 
 # Do our prior assumptions make sense?
 
 m.child.2.lpprior <- prior_samples(m.child.2)
@@ -150,7 +151,7 @@ p.child.2.prior <- ggplot(m.child.2.prior, aes(x=Intercept)) +
   geom_vline(aes(xintercept=0.492),
              color=unhcrPaletteRed[1], linetype="dashed", size=1)
 
-### II.C Posterior predictive checks
+### 2.C Posterior predictive checks
 # Could the data actually come from the posterior distribution, i.e. is the model reasonably specified?
 
 
@@ -162,7 +163,7 @@ p.child.2.postpred <- ppc_intervals_grouped(y = m.child.2$data$children, posteri
 
 
 
-### II.D Cross-validation
+### 2.D Cross-validation
 # Predictive accuracy of the models
 
 m.child.2.cv <- loo(m.child.2, save_psis = TRUE)
@@ -193,8 +194,90 @@ p.child.2.cv.pred <- ggplot(m.child.2.cv.pred, aes(x=reorder(asylum_country, chi
   geom_errorbar(stat="identity", aes(ymin = `5%`, ymax = `95%`), width=0) +
   coord_flip() 
 
-grid.arrange(p.child.1.cv.pred, p.child.2.cv.pred, nrow = 1)
 
+
+#### Model 3
+
+
+### 3.A General model summaries
+
+summary(m.child.3)
+prior_summary(m.child.3)
+p.m.child.3.mcmc <- plot(m.child.3) # trace and density plots
+
+
+### 3.B Prior predictive checks: 
+# Do our prior assumptions make sense?
+
+m.child.3.lpprior <- prior_samples(m.child.3)
+m.child.3.prior <- m.child.3.lpprior %>%
+  mutate(across(.fns = inv_logit_scaled))
+
+p.child.3.prior <- hist(m.child.3.prior$Intercept)
+
+plot(density(m.child.3.lpprior$sd_asylum_iso3))
+
+p.child.3.prior <- ggplot(m.child.3.prior, aes(x=Intercept)) + 
+  theme_minimal() +
+  theme(panel.grid.minor.y = element_blank(),
+        panel.grid.major.y = element_blank()) +
+  geom_histogram(color=unhcrPaletteBlue[1], fill="white") +
+  geom_vline(aes(xintercept=0.493),
+             color=unhcrPaletteRed[1], linetype="dashed", size=1)
+
+### 3.C Posterior predictive checks
+# Could the data actually come from the posterior distribution, i.e. is the model reasonably specified?
+
+
+m.child.3.postpred <- m.child.3$data %>% 
+  add_predicted_draws(m.child.3)
+
+p.child.3.postpred <- ppc_intervals_grouped(y = m.child.3$data$children, posterior_predict(m.child.3), prob = 0.95,
+                                            group = m.child.3$data$asylum_iso3)
+
+
+
+### 3.D Cross-validation
+# Predictive accuracy of the models
+
+m.child.3.cv <- loo(m.child.3, save_psis = TRUE)
+m.child.3.cv
+p.child.3.cv <- plot(m.child.3.cv) # Pareto k plot
+
+m.child.3.cv.pred <-  m.child.3$data |>
+  select(asylum_iso3 , totalEndYear, children) |>
+  left_join(m.child.1.postpred %>% select(asylum_iso3, `.prediction`) %>% 
+              group_by(asylum_iso3) %>% 
+              summarise("Prediction" = mean(`.prediction`)), 
+            by = "asylum_iso3") |>
+  bind_cols("LOO predict" = loo_predict(m.child.3, sample_new_levels = "gaussian")) |>
+  bind_cols(loo_predictive_interval(m.child.3, sample_new_levels = "gaussian")) |>
+  mutate(
+    children = children/totalEndYear,
+    Prediction = Prediction/totalEndYear,
+    `LOO predict` = `LOO predict`/totalEndYear,
+    `5%` = `5%`/totalEndYear,
+    `95%` = `95%`/totalEndYear
+  ) |>
+  left_join(asylum_countries %>% select(asylum_iso3, asylum_country), by = "asylum_iso3") 
+
+
+p.child.3.cv.pred <- ggplot(m.child.3.cv.pred, aes(x=reorder(asylum_country, children), y=children)) + 
+  geom_point() + 
+  #  ylim(-10, 30) +
+  geom_errorbar(stat="identity", aes(ymin = `5%`, ymax = `95%`), width=0) +
+  coord_flip() 
+
+
+##### compare models
+
+grid.arrange(p.child.1.cv.pred,  p.child.2.cv.pred, p.child.3.cv.pred,  nrow = 1)
+
+# rmse
+
+sqrt(mean((p.child.1.cv.pred$data$`LOO predict`-p.child.1.cv.pred$data$children)**2))
+sqrt(mean((p.child.2.cv.pred$data$`LOO predict`-p.child.2.cv.pred$data$children)**2))
+sqrt(mean((p.child.3.cv.pred$data$`LOO predict`-p.child.3.cv.pred$data$children)**2))
 
 ##### save workspace
 
